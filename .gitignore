@@ -1,0 +1,21 @@
+# Build output
+bin/
+obj/
+*.user
+*.suo
+.vs/
+
+# NuGet packages (restored automatically)
+packages/
+*.nupkg
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Connection strings / secrets (never commit these)
+appsettings.local.json
+secrets.json
+
+# FastReport compiled output
+*.fpx

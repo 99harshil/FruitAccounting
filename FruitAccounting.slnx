@@ -1,0 +1,10 @@
+<Solution>
+  <Folder Name="/Solution Items/">
+    <File Path=".gitignore" />
+  </Folder>
+  <Project Path="FruitAccounting.Core/FruitAccounting.Core.csproj" Id="41655e66-ce72-4d15-b03f-780a4ccfda73" />
+  <Project Path="FruitAccounting.Data/FruitAccounting.Data.csproj" Id="bddd5518-ab28-41ae-a1d6-5b85c0dbb6e8" />
+  <Project Path="FruitAccounting.Reports/FruitAccounting.Reports.csproj" Id="32f32e71-7deb-493e-afbc-31e59e2ac8d9" />
+  <Project Path="FruitAccounting.UI/FruitAccounting.UI.csproj" Id="4537115a-b6ca-4245-9e4d-283711b08da5" />
+  <Project Path="FruitAccounting.Web/FruitAccounting.Web.csproj" Id="2d51101f-7ce8-47fa-b8f1-4a491dd38446" />
+</Solution>
