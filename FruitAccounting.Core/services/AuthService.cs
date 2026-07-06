@@ -29,5 +29,34 @@ namespace FruitAccounting.Core.services
                 ? user
                 : null;
         }
+
+        public async Task<(bool, string)> ChangePasswordAsync(string username, string currentPassword, string newPassword)
+        {
+            await using var db = await _contextFactory.CreateDbContextAsync();
+
+            var user = await db.Users.FirstOrDefaultAsync(u => u.Username == username);
+            if (user == null)
+                return (false, "User not found.");
+
+            if (!BCrypt.Net.BCrypt.Verify(currentPassword, user.PasswordHash))
+                return (false, "Current password is incorrect.");
+
+            user.PasswordHash = BCrypt.Net.BCrypt.HashPassword(newPassword, workFactor: 11);
+            db.Users.Update(user);
+            await db.SaveChangesAsync();
+
+            return (true, "Password changed successfully.");
+        }
+
+        public async Task<List<Company>> GetUserCompaniesAsync(long userId)
+        {
+            await using var db = await _contextFactory.CreateDbContextAsync();
+
+            var user = await db.Users
+                .Include(u => u.Companies)
+                .FirstOrDefaultAsync(u => u.UserId == userId);
+
+            return user?.Companies.ToList() ?? new List<Company>();
+        }
     }
 }

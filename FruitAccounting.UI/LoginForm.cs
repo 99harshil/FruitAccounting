@@ -79,9 +79,14 @@ namespace FruitAccounting.UI
 
         private void btnChangePassword_Click(object sender, EventArgs e)
         {
-            // Phase 1 — wire this up after main shell is built
-            MessageBox.Show("Change Password coming soon.", "Info",
-                MessageBoxButtons.OK, MessageBoxIcon.Information);
+            if (string.IsNullOrWhiteSpace(txtUserId.Text))
+            {
+                MessageBox.Show("Please enter a username first.", "Info");
+                return;
+            }
+
+            using var form = new ChangePasswordForm(_authService, txtUserId.Text.Trim());
+            form.ShowDialog();
         }
     }
 }
