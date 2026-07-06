@@ -1,6 +1,5 @@
 using FruitAccounting.Core.services;
 using FruitAccounting.Data.Context;
-using FruitAccounting.Data.Entities;
 using FruitAccounting.Data.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
@@ -15,7 +14,7 @@ namespace FruitAccounting.UI
         public static string ConnectionString { get; private set; } = string.Empty;
 
         [STAThread]
-        static async Task Main()
+        static void Main()
         {
             ApplicationConfiguration.Initialize();
 
@@ -47,7 +46,6 @@ namespace FruitAccounting.UI
                     services.AddDbContextFactory<FruitAccountingContext>((sp, options) =>
                         options.UseNpgsql(sp.GetRequiredService<NpgsqlDataSource>()));
                     services.AddScoped<AuthService>();
-                    services.AddScoped<FinancialYearService>();
                     services.AddTransient<LoginForm>();
                     services.AddTransient<Form1>();
                 })
@@ -68,30 +66,11 @@ namespace FruitAccounting.UI
                 return;   // user cancelled — exit cleanly
 
             var loggedInUser = loginForm.LoggedInUser!;
-            var authService = scope.ServiceProvider.GetRequiredService<AuthService>();
-            var financialYearService = scope.ServiceProvider.GetRequiredService<FinancialYearService>();
-            var appContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<FruitAccountingContext>>();
-
-            // Get user's first company from database
-            using var context = appContextFactory.CreateDbContext();
-            var userCompany = await context.Companies.AsNoTracking().FirstOrDefaultAsync();
-
-            if (userCompany == null)
-            {
-                MessageBox.Show("No company found in database.", "Error");
-                return;
-            }
-
-            using var fyForm = new FinancialYearManagementForm(financialYearService, userCompany);
-            if (fyForm.ShowDialog() != DialogResult.OK)
-                return;   // user cancelled — exit cleanly
-
-            var selectedFinancialYearId = fyForm.SelectedFinancialYearId;
 
             // Main shell comes next (Phase 1 Step 2)
-            // For now, prove login and FY selection work:
+            // For now, prove login works:
             MessageBox.Show(
-                $"Welcome, {loggedInUser.DisplayName}!\nRole: {loggedInUser.Role}\nCompany: {userCompany.Name}\nFinancial Year ID: {selectedFinancialYearId}",
+                $"Welcome, {loggedInUser.DisplayName}!\nRole: {loggedInUser.Role}",
                 "Login Successful");
         }
     }
