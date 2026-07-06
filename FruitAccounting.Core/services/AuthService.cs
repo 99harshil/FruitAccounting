@@ -52,18 +52,5 @@ namespace FruitAccounting.Core.services
 
             return (true, "Password changed successfully.");
         }
-
-        public async Task<List<(long CompanyId, string CompanyCode, string CompanyName)>> GetUserCompaniesAsync(long userId)
-        {
-            await using var db = await _contextFactory.CreateDbContextAsync();
-
-            var companies = await db.Users
-                .Where(u => u.UserId == userId)
-                .SelectMany(u => u.Companies)
-                .Select(c => new { c.CompanyId, c.Code, c.Name })
-                .ToListAsync();
-
-            return companies.Select(c => (c.CompanyId, c.Code, c.Name)).ToList();
-        }
     }
 }
