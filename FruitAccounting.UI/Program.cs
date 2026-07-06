@@ -1,5 +1,6 @@
 using FruitAccounting.Core.services;
 using FruitAccounting.Data.Context;
+using FruitAccounting.Data.Entities;
 using FruitAccounting.Data.Enums;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
