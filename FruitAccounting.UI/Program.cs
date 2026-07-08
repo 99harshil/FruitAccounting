@@ -1,7 +1,7 @@
 using FruitAccounting.Core.services;
 using FruitAccounting.Data.Context;
 using FruitAccounting.Data.Enums;
-using FruitAccounting.Data.Entities
+using FruitAccounting.Data.Entities;
 using Microsoft.Extensions.Configuration;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -48,6 +48,7 @@ namespace FruitAccounting.UI
                         options.UseNpgsql(sp.GetRequiredService<NpgsqlDataSource>()));
                     services.AddScoped<AuthService>();
                     services.AddScoped<FinancialYearService>();
+                    services.AddScoped<UserPreferencesService>();
                     services.AddTransient<LoginForm>();
                     services.AddTransient<Form1>();
                 })
@@ -69,6 +70,7 @@ namespace FruitAccounting.UI
 
             var loggedInUser = loginForm.LoggedInUser!;
             var financialYearService = scope.ServiceProvider.GetRequiredService<FinancialYearService>();
+            var userPreferencesService = scope.ServiceProvider.GetRequiredService<UserPreferencesService>();
             var appContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<FruitAccountingContext>>();
 
             // Get user's first company from database
@@ -86,12 +88,18 @@ namespace FruitAccounting.UI
                 return;   // user cancelled — exit cleanly
 
             var selectedFinancialYearId = fyForm.SelectedFinancialYearId;
+            var selectedFinancialYear = await financialYearService.GetFinancialYearAsync(selectedFinancialYearId);
 
-            // Main shell comes next (Phase 1 Step 2)
-            // For now, prove login and FY selection work:
-            MessageBox.Show(
-                $"Welcome, {loggedInUser.DisplayName}!\nRole: {loggedInUser.Role}\nCompany: {userCompany.Name}\nFinancial Year ID: {selectedFinancialYearId}",
-                "Login Successful");
+            if (selectedFinancialYear == null)
+            {
+                MessageBox.Show("Error loading financial year.", "Error");
+                return;
+            }
+
+            // Show main shell
+            using var mainShell = new MainShell(userPreferencesService, loggedInUser, selectedFinancialYear);
+            if (mainShell.ShowDialog() != DialogResult.OK)
+                return;   // User logged off
         }
     }
 }
