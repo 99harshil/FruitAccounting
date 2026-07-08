@@ -102,6 +102,8 @@ public partial class FruitAccountingContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
+    public virtual DbSet<UserPreference> UserPreferences { get; set; }
+
     public virtual DbSet<UserPermission> UserPermissions { get; set; }
 
     public virtual DbSet<WhatsappDispatch> WhatsappDispatches { get; set; }
@@ -2201,6 +2203,32 @@ public partial class FruitAccountingContext : DbContext
                         j.IndexerProperty<long>("UserId").HasColumnName("user_id");
                         j.IndexerProperty<long>("CompanyId").HasColumnName("company_id");
                     });
+        });
+
+        modelBuilder.Entity<UserPreference>(entity =>
+        {
+            entity.HasKey(e => e.UserPreferenceId).HasName("user_preferences_pkey");
+
+            entity.ToTable("user_preferences");
+
+            entity.HasIndex(e => new { e.UserId, e.PreferenceKey }, "idx_user_preferences_key").IsUnique();
+
+            entity.Property(e => e.UserPreferenceId)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("user_preference_id");
+            entity.Property(e => e.UserId).HasColumnName("user_id");
+            entity.Property(e => e.PreferenceKey)
+                .HasMaxLength(60)
+                .HasColumnName("preference_key");
+            entity.Property(e => e.PreferenceValue).HasColumnName("preference_value");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.User).WithMany(p => p.UserPreferences)
+                .HasForeignKey(d => d.UserId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("user_preferences_user_id_fkey");
         });
 
         modelBuilder.Entity<UserPermission>(entity =>
