@@ -1,0 +1,11 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "FruitAccounting",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "FruitAccounting.UI/FruitAccounting.UI.csproj"],
+      "port": 5000
+    }
+  ]
+}

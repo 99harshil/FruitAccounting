@@ -9,17 +9,18 @@ namespace FruitAccounting.UI
         private readonly UserPreferencesService _preferencesService;
         private readonly User _loggedInUser;
         private readonly FinancialYear _financialYear;
+        private readonly Company _company;
         private ToolStrip? _toolbar;
         private Dictionary<string, Form> _openForms = new();
 
-        public MainShell(UserPreferencesService preferencesService, User loggedInUser, FinancialYear financialYear)
+        public MainShell(UserPreferencesService preferencesService, User loggedInUser, FinancialYear financialYear, Company company)
         {
             InitializeComponent();
             _preferencesService = preferencesService;
             _loggedInUser = loggedInUser;
             _financialYear = financialYear;
+            _company = company;
 
-            IsMdiContainer = true;
             KeyPreview = true;
             KeyDown += MainShell_KeyDown;
         }
@@ -28,8 +29,7 @@ namespace FruitAccounting.UI
         {
             UpdateTitleBar();
             CreateMenuBar();
-            await CreateToolbar();
-            CreateStatusBar();
+            UpdateStatusBar();
             ApplyRoleBasedMenuVisibility();
         }
 
@@ -40,61 +40,68 @@ namespace FruitAccounting.UI
 
         private void CreateMenuBar()
         {
-            var menuStrip = new MenuStrip();
+            // Clear existing menu items (except the top-level menus from Designer)
+            menuItemMain.HideDropDown();
+            menuItemMaster.HideDropDown();
+            menuItemAccount.HideDropDown();
+            menuItemDomestic.HideDropDown();
+            menuItemDesavar.HideDropDown();
+            menuItemUtility.HideDropDown();
+            menuItemExit.HideDropDown();
+
+            menuItemMain.DropDownItems.Clear();
+            menuItemMaster.DropDownItems.Clear();
+            menuItemAccount.DropDownItems.Clear();
+            menuItemDomestic.DropDownItems.Clear();
+            menuItemDesavar.DropDownItems.Clear();
+            menuItemUtility.DropDownItems.Clear();
+            menuItemExit.DropDownItems.Clear();
 
             // Main Menu
-            var mainMenu = new ToolStripMenuItem("Main");
-
             var userMgrMenu = new ToolStripMenuItem("User Manager");
             userMgrMenu.DropDownItems.Add("Create User", null, (s, e) => ShowForm("CreateUser"));
             userMgrMenu.DropDownItems.Add("User Rights", null, (s, e) => ShowForm("UserRights"));
             userMgrMenu.DropDownItems.Add("Delete User", null, (s, e) => ShowForm("DeleteUser"));
             userMgrMenu.DropDownItems.Add("Company Rights", null, (s, e) => ShowForm("CompanyRights"));
-            mainMenu.DropDownItems.Add(userMgrMenu);
-
-            mainMenu.DropDownItems.Add(new ToolStripSeparator());
-            mainMenu.DropDownItems.Add("Log Off", null, (s, e) => LogOff());
-
-            menuStrip.Items.Add(mainMenu);
+            menuItemMain.DropDownItems.Add(userMgrMenu);
+            menuItemMain.DropDownItems.Add(new ToolStripSeparator());
+            menuItemMain.DropDownItems.Add("Log Off", null, (s, e) => LogOff());
 
             // Master
-            var masterMenu = new ToolStripMenuItem("Master");
             var accountSubMenu = new ToolStripMenuItem("Account");
             accountSubMenu.DropDownItems.Add("Main Group", null, (s, e) => ShowForm("MainGroup"));
             accountSubMenu.DropDownItems.Add("Sub Group", null, (s, e) => ShowForm("SubGroup"));
             accountSubMenu.DropDownItems.Add("Account", null, (s, e) => ShowForm("Account"));
             accountSubMenu.DropDownItems.Add("Daybook", null, (s, e) => ShowForm("Daybook"));
-            masterMenu.DropDownItems.Add(accountSubMenu);
+            menuItemMaster.DropDownItems.Add(accountSubMenu);
 
             var productSubMenu = new ToolStripMenuItem("Product");
             productSubMenu.DropDownItems.Add("Group", null, (s, e) => ShowForm("ProductGroup"));
             productSubMenu.DropDownItems.Add("Category", null, (s, e) => ShowForm("ProductCategory"));
             productSubMenu.DropDownItems.Add("Item", null, (s, e) => ShowForm("Item"));
             productSubMenu.DropDownItems.Add("Count", null, (s, e) => ShowForm("ItemCount"));
-            masterMenu.DropDownItems.Add(productSubMenu);
+            menuItemMaster.DropDownItems.Add(productSubMenu);
 
-            masterMenu.DropDownItems.Add("Region", null, (s, e) => ShowForm("Region"));
-            masterMenu.DropDownItems.Add("Country", null, (s, e) => ShowForm("Country"));
-            menuStrip.Items.Add(masterMenu);
+            menuItemMaster.DropDownItems.Add("Region", null, (s, e) => ShowForm("Region"));
+            menuItemMaster.DropDownItems.Add("Country", null, (s, e) => ShowForm("Country"));
 
             // Account
-            var accountMenu = new ToolStripMenuItem("Account");
             var receiptSubMenu = new ToolStripMenuItem("Receipt");
             receiptSubMenu.DropDownItems.Add("Cash", null, (s, e) => ShowForm("CashReceipt"));
             receiptSubMenu.DropDownItems.Add("Bank", null, (s, e) => ShowForm("BankReceipt"));
-            accountMenu.DropDownItems.Add(receiptSubMenu);
+            menuItemAccount.DropDownItems.Add(receiptSubMenu);
 
             var paymentSubMenu = new ToolStripMenuItem("Payment");
             paymentSubMenu.DropDownItems.Add("Cash", null, (s, e) => ShowForm("CashPayment"));
             paymentSubMenu.DropDownItems.Add("Bank", null, (s, e) => ShowForm("BankPayment"));
             paymentSubMenu.DropDownItems.Add("TDS Payment", null, (s, e) => ShowForm("TDSPayment"));
             paymentSubMenu.DropDownItems.Add("Freight Payment", null, (s, e) => ShowForm("FreightPayment"));
-            accountMenu.DropDownItems.Add(paymentSubMenu);
+            menuItemAccount.DropDownItems.Add(paymentSubMenu);
 
-            accountMenu.DropDownItems.Add("Journal", null, (s, e) => ShowForm("Journal"));
-            accountMenu.DropDownItems.Add("Bank Reconciliation", null, (s, e) => ShowForm("BankReconciliation"));
-            accountMenu.DropDownItems.Add("Expense Entry", null, (s, e) => ShowForm("ExpenseEntry"));
-            accountMenu.DropDownItems.Add("TDS Return", null, (s, e) => ShowForm("TDSReturn"));
+            menuItemAccount.DropDownItems.Add("Journal", null, (s, e) => ShowForm("Journal"));
+            menuItemAccount.DropDownItems.Add("Bank Reconciliation", null, (s, e) => ShowForm("BankReconciliation"));
+            menuItemAccount.DropDownItems.Add("Expense Entry", null, (s, e) => ShowForm("ExpenseEntry"));
+            menuItemAccount.DropDownItems.Add("TDS Return", null, (s, e) => ShowForm("TDSReturn"));
 
             var accountReportsSubMenu = new ToolStripMenuItem("Reports");
             accountReportsSubMenu.DropDownItems.Add("Bank Register", null, (s, e) => ShowForm("BankRegister"));
@@ -103,63 +110,51 @@ namespace FruitAccounting.UI
             cashRegisterSubMenu.DropDownItems.Add("User Wise", null, (s, e) => ShowForm("CashRegisterUserWise"));
             accountReportsSubMenu.DropDownItems.Add(cashRegisterSubMenu);
             accountReportsSubMenu.DropDownItems.Add("Journal Register", null, (s, e) => ShowForm("JournalRegister"));
-            accountMenu.DropDownItems.Add(accountReportsSubMenu);
-
-            menuStrip.Items.Add(accountMenu);
+            menuItemAccount.DropDownItems.Add(accountReportsSubMenu);
 
             // Domestic
-            var domesticMenu = new ToolStripMenuItem("Domestic");
-            domesticMenu.DropDownItems.Add("Purchase", null, (s, e) => ShowForm("Purchase"));
-            domesticMenu.DropDownItems.Add("Sales", null, (s, e) => ShowForm("Sales"));
+            menuItemDomestic.DropDownItems.Add("Purchase", null, (s, e) => ShowForm("Purchase"));
+            menuItemDomestic.DropDownItems.Add("Sales", null, (s, e) => ShowForm("Sales"));
 
             var crateSubMenu = new ToolStripMenuItem("Crate");
             crateSubMenu.DropDownItems.Add("Receipt", null, (s, e) => ShowForm("CrateReceipt"));
             crateSubMenu.DropDownItems.Add("Delivery", null, (s, e) => ShowForm("CrateDelivery"));
             crateSubMenu.DropDownItems.Add("Crate Amount Conversion", null, (s, e) => ShowForm("CrateAmountConversion"));
-            domesticMenu.DropDownItems.Add(crateSubMenu);
+            menuItemDomestic.DropDownItems.Add(crateSubMenu);
 
-            domesticMenu.DropDownItems.Add("Lot Split", null, (s, e) => ShowForm("LotSplit"));
-            domesticMenu.DropDownItems.Add("Lot Transfer", null, (s, e) => ShowForm("LotTransfer"));
-            domesticMenu.DropDownItems.Add("Lot Merge", null, (s, e) => ShowForm("LotMerge"));
-            domesticMenu.DropDownItems.Add("Cold Store", null, (s, e) => ShowForm("ColdStore"));
+            menuItemDomestic.DropDownItems.Add("Lot Split", null, (s, e) => ShowForm("LotSplit"));
+            menuItemDomestic.DropDownItems.Add("Lot Transfer", null, (s, e) => ShowForm("LotTransfer"));
+            menuItemDomestic.DropDownItems.Add("Lot Merge", null, (s, e) => ShowForm("LotMerge"));
+            menuItemDomestic.DropDownItems.Add("Cold Store", null, (s, e) => ShowForm("ColdStore"));
 
             var domesticReportsSubMenu = new ToolStripMenuItem("Reports");
             domesticReportsSubMenu.DropDownItems.Add("Stock", null, (s, e) => ShowForm("Stock"));
-            domesticMenu.DropDownItems.Add(domesticReportsSubMenu);
-
-            menuStrip.Items.Add(domesticMenu);
+            domesticReportsSubMenu.DropDownItems.Add("Chithi", null, (s, e) => ShowForm("Chithi"));
+            domesticReportsSubMenu.DropDownItems.Add("Chitha", null, (s, e) => ShowForm("Chitha"));
+            menuItemDomestic.DropDownItems.Add(domesticReportsSubMenu);
 
             // Desavar
-            var desavarMenu = new ToolStripMenuItem("Desavar");
-            desavarMenu.DropDownItems.Add("Sales", null, (s, e) => ShowForm("DesavarSales"));
+            menuItemDesavar.DropDownItems.Add("Sales", null, (s, e) => ShowForm("DesavarSales"));
             var desavarReportsSubMenu = new ToolStripMenuItem("Reports");
             desavarReportsSubMenu.DropDownItems.Add("Register", null, (s, e) => ShowForm("DesavarRegister"));
-            desavarMenu.DropDownItems.Add(desavarReportsSubMenu);
-            menuStrip.Items.Add(desavarMenu);
+            menuItemDesavar.DropDownItems.Add(desavarReportsSubMenu);
 
             // Utility
-            var utilityMenu = new ToolStripMenuItem("Utility");
             var calcItem = new ToolStripMenuItem("Calculator", null, (s, e) => ShowCalculator());
             calcItem.ShortcutKeys = Keys.F8;
-            utilityMenu.DropDownItems.Add(calcItem);
-            utilityMenu.DropDownItems.Add("Company Change", null, (s, e) => ShowForm("CompanyChange"));
-            utilityMenu.DropDownItems.Add("New Year", null, (s, e) => ShowForm("NewYear"));
-            utilityMenu.DropDownItems.Add("Data Check", null, (s, e) => ShowForm("DataCheck"));
-            utilityMenu.DropDownItems.Add("Account Merging", null, (s, e) => ShowForm("AccountMerging"));
-            utilityMenu.DropDownItems.Add("Pending Cheque", null, (s, e) => ShowForm("PendingCheque"));
-            utilityMenu.DropDownItems.Add("OHCS Update", null, (s, e) => ShowForm("OHCSUpdate"));
-            utilityMenu.DropDownItems.Add("RD Update", null, (s, e) => ShowForm("RDUpdate"));
-            utilityMenu.DropDownItems.Add("Stock Set", null, (s, e) => ShowForm("StockSet"));
-            utilityMenu.DropDownItems.Add("Activity Report", null, (s, e) => ShowForm("ActivityReport"));
-            menuStrip.Items.Add(utilityMenu);
+            menuItemUtility.DropDownItems.Add(calcItem);
+            menuItemUtility.DropDownItems.Add("Company Change", null, (s, e) => ShowForm("CompanyChange"));
+            menuItemUtility.DropDownItems.Add("New Year", null, (s, e) => ShowForm("NewYear"));
+            menuItemUtility.DropDownItems.Add("Data Check", null, (s, e) => ShowForm("DataCheck"));
+            menuItemUtility.DropDownItems.Add("Account Merging", null, (s, e) => ShowForm("AccountMerging"));
+            menuItemUtility.DropDownItems.Add("Pending Cheque", null, (s, e) => ShowForm("PendingCheque"));
+            menuItemUtility.DropDownItems.Add("OHCS Update", null, (s, e) => ShowForm("OHCSUpdate"));
+            menuItemUtility.DropDownItems.Add("RD Update", null, (s, e) => ShowForm("RDUpdate"));
+            menuItemUtility.DropDownItems.Add("Stock Set", null, (s, e) => ShowForm("StockSet"));
+            menuItemUtility.DropDownItems.Add("Activity Report", null, (s, e) => ShowForm("ActivityReport"));
 
             // Exit
-            var exitItem = new ToolStripMenuItem("Exit", null, (s, e) => ExitApplication());
-            exitItem.ShortcutKeys = Keys.Control | Keys.X;
-            menuStrip.Items.Add(exitItem);
-
-            Controls.Add(menuStrip);
-            MainMenuStrip = menuStrip;
+            menuItemExit.Click += (s, e) => ExitApplication();
         }
 
         private async Task CreateToolbar()
@@ -210,19 +205,11 @@ namespace FruitAccounting.UI
             Controls.Add(_toolbar);
         }
 
-        private void CreateStatusBar()
+        private void UpdateStatusBar()
         {
-            var statusBar = new StatusStrip();
-            var userStatus = new ToolStripStatusLabel($"User: {_loggedInUser.DisplayName}");
-            var fyStatus = new ToolStripStatusLabel($"FY: {_financialYear.Code}");
-            var dateStatus = new ToolStripStatusLabel($"({_financialYear.StartDate:dd/MM/yyyy} - {_financialYear.EndDate:dd/MM/yyyy})");
-
-            statusBar.Items.Add(userStatus);
-            statusBar.Items.Add(new ToolStripStatusLabel { Spring = true });
-            statusBar.Items.Add(fyStatus);
-            statusBar.Items.Add(dateStatus);
-
-            Controls.Add(statusBar);
+            lblStatusCompany.Text = $"{_company.Name}--{_financialYear.Code}";
+            lblStatusUser.Text = _loggedInUser.DisplayName;
+            lblStatusDateTime.Text = $"{_financialYear.StartDate:dd-MMM-yyyy} to {_financialYear.EndDate:dd-MMM-yyyy}";
         }
 
         private void ApplyRoleBasedMenuVisibility()
@@ -289,6 +276,12 @@ namespace FruitAccounting.UI
                     break;
                 case "Stock":
                     newForm = new Form { Text = "Stock Report", MdiParent = this };
+                    break;
+                case "Chithi":
+                    newForm = new Form { Text = "Chithi Report", MdiParent = this };
+                    break;
+                case "Chitha":
+                    newForm = new Form { Text = "Chitha Report", MdiParent = this };
                     break;
                 case "Journal":
                     newForm = new Form { Text = "Journal Entry", MdiParent = this };

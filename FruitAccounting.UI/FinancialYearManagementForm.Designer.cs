@@ -13,111 +13,158 @@ namespace FruitAccounting.UI
             base.Dispose(disposing);
         }
 
+        #region Windows Form Designer generated code
+
         private void InitializeComponent()
         {
-            lblTitle = new Label();
-            lblCompanyName = new Label();
-            lstFinancialYears = new ListBox();
+            dgvFinancialYears = new DataGridView();
+            colYearCode = new DataGridViewTextBoxColumn();
+            colYearName = new DataGridViewTextBoxColumn();
+            panelButtonDock = new Panel();
             btnAdd = new Button();
-            btnEdit = new Button();
-            btnDelete = new Button();
-            btnSelect = new Button();
             btnCancel = new Button();
+            btnDelete = new Button();
+            btnEdit = new Button();
             lblError = new Label();
+            ((System.ComponentModel.ISupportInitialize)dgvFinancialYears).BeginInit();
+            panelButtonDock.SuspendLayout();
             SuspendLayout();
-
-            lblTitle.AutoSize = true;
-            lblTitle.Font = new Font("Segoe UI", 14.25F, FontStyle.Bold, GraphicsUnit.Point, 0);
-            lblTitle.Location = new Point(150, 20);
-            lblTitle.Size = new Size(231, 25);
-            lblTitle.Text = "Financial Year Management";
-
-            lblCompanyName.AutoSize = true;
-            lblCompanyName.Location = new Point(20, 70);
-            lblCompanyName.Size = new Size(94, 15);
-            lblCompanyName.Text = "Company: ";
-
-            lstFinancialYears.FormattingEnabled = true;
-            lstFinancialYears.ItemHeight = 15;
-            lstFinancialYears.Location = new Point(20, 100);
-            lstFinancialYears.Name = "lstFinancialYears";
-            lstFinancialYears.Size = new Size(420, 184);
-            lstFinancialYears.TabIndex = 2;
-
-            btnAdd.Location = new Point(20, 300);
+            //
+            // dgvFinancialYears
+            //
+            dgvFinancialYears.AllowUserToAddRows = false;
+            dgvFinancialYears.AllowUserToDeleteRows = false;
+            dgvFinancialYears.AllowUserToResizeRows = false;
+            dgvFinancialYears.BackgroundColor = Color.Gray;
+            dgvFinancialYears.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            dgvFinancialYears.Columns.AddRange(new DataGridViewColumn[] { colYearCode, colYearName });
+            dgvFinancialYears.Location = new Point(24, 20);
+            dgvFinancialYears.MultiSelect = false;
+            dgvFinancialYears.Name = "dgvFinancialYears";
+            dgvFinancialYears.ReadOnly = true;
+            dgvFinancialYears.RowHeadersVisible = false;
+            dgvFinancialYears.SelectionMode = DataGridViewSelectionMode.FullRowSelect;
+            dgvFinancialYears.Size = new Size(468, 240);
+            dgvFinancialYears.TabIndex = 0;
+            //
+            // colYearCode
+            //
+            colYearCode.HeaderText = "Year Code";
+            colYearCode.Name = "colYearCode";
+            colYearCode.ReadOnly = true;
+            colYearCode.Width = 120;
+            //
+            // colYearName
+            //
+            colYearName.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            colYearName.HeaderText = "Financial Year Period";
+            colYearName.Name = "colYearName";
+            colYearName.ReadOnly = true;
+            //
+            // panelButtonDock
+            //
+            panelButtonDock.BorderStyle = BorderStyle.FixedSingle;
+            panelButtonDock.Controls.Add(btnAdd);
+            panelButtonDock.Controls.Add(btnCancel);
+            panelButtonDock.Controls.Add(btnDelete);
+            panelButtonDock.Controls.Add(btnEdit);
+            panelButtonDock.Location = new Point(83, 285);
+            panelButtonDock.Name = "panelButtonDock";
+            panelButtonDock.Size = new Size(350, 42);
+            panelButtonDock.TabIndex = 1;
+            //
+            // btnAdd
+            //
+            btnAdd.BackColor = Color.LightSteelBlue;
+            btnAdd.FlatStyle = FlatStyle.Popup;
+            btnAdd.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnAdd.Location = new Point(15, 7);
             btnAdd.Name = "btnAdd";
-            btnAdd.Size = new Size(75, 23);
-            btnAdd.TabIndex = 3;
-            btnAdd.Text = "Add";
-            btnAdd.UseVisualStyleBackColor = true;
-            btnAdd.Click += this.btnAdd_Click;
-
-            btnEdit.Location = new Point(105, 300);
-            btnEdit.Name = "btnEdit";
-            btnEdit.Size = new Size(75, 23);
-            btnEdit.TabIndex = 4;
-            btnEdit.Text = "Edit";
-            btnEdit.UseVisualStyleBackColor = true;
-            btnEdit.Click += this.btnEdit_Click;
-
-            btnDelete.Location = new Point(190, 300);
-            btnDelete.Name = "btnDelete";
-            btnDelete.Size = new Size(75, 23);
-            btnDelete.TabIndex = 5;
-            btnDelete.Text = "Delete";
-            btnDelete.UseVisualStyleBackColor = true;
-            btnDelete.Click += this.btnDelete_Click;
-
-            btnSelect.Location = new Point(120, 350);
-            btnSelect.Name = "btnSelect";
-            btnSelect.Size = new Size(75, 23);
-            btnSelect.TabIndex = 6;
-            btnSelect.Text = "Select";
-            btnSelect.UseVisualStyleBackColor = true;
-            btnSelect.Click += this.btnSelect_Click;
-
-            btnCancel.Location = new Point(220, 350);
+            btnAdd.Size = new Size(75, 26);
+            btnAdd.TabIndex = 2;
+            btnAdd.Text = "&Add";
+            btnAdd.UseVisualStyleBackColor = false;
+            btnAdd.Click += btnAdd_Click;
+            //
+            // btnCancel
+            //
+            btnCancel.BackColor = Color.LightSteelBlue;
+            btnCancel.FlatStyle = FlatStyle.Popup;
+            btnCancel.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnCancel.Location = new Point(96, 7);
             btnCancel.Name = "btnCancel";
-            btnCancel.Size = new Size(75, 23);
-            btnCancel.TabIndex = 7;
-            btnCancel.Text = "Cancel";
-            btnCancel.UseVisualStyleBackColor = true;
-            btnCancel.Click += this.btnCancel_Click;
-
+            btnCancel.Size = new Size(75, 26);
+            btnCancel.TabIndex = 3;
+            btnCancel.Text = "&Exit";
+            btnCancel.UseVisualStyleBackColor = false;
+            btnCancel.Click += btnCancel_Click;
+            //
+            // btnDelete
+            //
+            btnDelete.BackColor = Color.LightSteelBlue;
+            btnDelete.FlatStyle = FlatStyle.Popup;
+            btnDelete.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnDelete.Location = new Point(177, 7);
+            btnDelete.Name = "btnDelete";
+            btnDelete.Size = new Size(75, 26);
+            btnDelete.TabIndex = 4;
+            btnDelete.Text = "&Delete";
+            btnDelete.UseVisualStyleBackColor = false;
+            btnDelete.Click += btnDelete_Click;
+            //
+            // btnEdit
+            //
+            btnEdit.BackColor = Color.LightSteelBlue;
+            btnEdit.FlatStyle = FlatStyle.Popup;
+            btnEdit.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            btnEdit.Location = new Point(258, 7);
+            btnEdit.Name = "btnEdit";
+            btnEdit.Size = new Size(75, 26);
+            btnEdit.TabIndex = 5;
+            btnEdit.Text = "&Update";
+            btnEdit.UseVisualStyleBackColor = false;
+            btnEdit.Click += btnEdit_Click;
+            //
+            // lblError
+            //
             lblError.AutoSize = true;
             lblError.ForeColor = Color.Red;
-            lblError.Location = new Point(20, 390);
+            lblError.Location = new Point(24, 342);
             lblError.Name = "lblError";
             lblError.Size = new Size(0, 15);
-            lblError.TabIndex = 8;
-
+            lblError.TabIndex = 6;
+            //
+            // FinancialYearManagementForm
+            //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
-            ClientSize = new Size(500, 430);
+            ClientSize = new Size(516, 352);
             Controls.Add(lblError);
-            Controls.Add(btnCancel);
-            Controls.Add(btnSelect);
-            Controls.Add(btnDelete);
-            Controls.Add(btnEdit);
-            Controls.Add(btnAdd);
-            Controls.Add(lstFinancialYears);
-            Controls.Add(lblCompanyName);
-            Controls.Add(lblTitle);
+            Controls.Add(panelButtonDock);
+            Controls.Add(dgvFinancialYears);
+            FormBorderStyle = FormBorderStyle.FixedDialog;
+            MaximizeBox = false;
+            MinimizeBox = false;
             Name = "FinancialYearManagementForm";
-            Text = "Financial Year Management";
-            Load += this.FinancialYearManagementForm_Load;
+            StartPosition = FormStartPosition.CenterScreen;
+            Text = "Financial Year Information";
+            Load += FinancialYearManagementForm_Load;
+            ((System.ComponentModel.ISupportInitialize)dgvFinancialYears).EndInit();
+            panelButtonDock.ResumeLayout(false);
             ResumeLayout(false);
             PerformLayout();
         }
 
-        private Label lblTitle;
-        private Label lblCompanyName;
-        private ListBox lstFinancialYears;
+        #endregion
+
+        private DataGridView dgvFinancialYears;
+        private DataGridViewTextBoxColumn colYearCode;
+        private DataGridViewTextBoxColumn colYearName;
+        private Panel panelButtonDock;
         private Button btnAdd;
-        private Button btnEdit;
-        private Button btnDelete;
-        private Button btnSelect;
         private Button btnCancel;
+        private Button btnDelete;
+        private Button btnEdit;
         private Label lblError;
     }
 }

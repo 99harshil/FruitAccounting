@@ -19,8 +19,18 @@ namespace FruitAccounting.UI
 
         private async void FinancialYearManagementForm_Load(object sender, EventArgs e)
         {
-            lblCompanyName.Text = $"Company: {_company.Name}";
             await LoadFinancialYears();
+
+            // Wire up events for selection
+            dgvFinancialYears.DoubleClick += (s, e) => SelectFinancialYear();
+            dgvFinancialYears.KeyDown += (s, e) =>
+            {
+                if (e.KeyCode == Keys.Return)
+                {
+                    SelectFinancialYear();
+                    e.Handled = true;
+                }
+            };
         }
 
         private async Task LoadFinancialYears()
@@ -28,22 +38,15 @@ namespace FruitAccounting.UI
             try
             {
                 var financialYears = await _financialYearService.GetFinancialYearsByCompanyAsync(_company.CompanyId);
-                lstFinancialYears.Items.Clear();
-                lstFinancialYears.DisplayMember = "DisplayText";
-                lstFinancialYears.ValueMember = "FinancialYearId";
+                dgvFinancialYears.Rows.Clear();
 
                 foreach (var fy in financialYears)
                 {
-                    var item = new FinancialYearListItem
-                    {
-                        FinancialYearId = fy.FinancialYearId,
-                        Code = fy.Code,
-                        StartDate = fy.StartDate,
-                        EndDate = fy.EndDate,
-                        IsActive = fy.IsActive,
-                        IsClosed = fy.IsClosed
-                    };
-                    lstFinancialYears.Items.Add(item);
+                    var rowIndex = dgvFinancialYears.Rows.Add(
+                        fy.Code,
+                        $"{fy.StartDate:dd-MMM-yyyy} to {fy.EndDate:dd-MMM-yyyy}"
+                    );
+                    dgvFinancialYears.Rows[rowIndex].Tag = fy.FinancialYearId;
                 }
             }
             catch (Exception ex)
@@ -64,14 +67,15 @@ namespace FruitAccounting.UI
 
         private async void btnEdit_Click(object sender, EventArgs e)
         {
-            if (lstFinancialYears.SelectedItem == null)
+            if (dgvFinancialYears.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Please select a financial year to edit.", "Info");
                 return;
             }
 
-            var item = (FinancialYearListItem)lstFinancialYears.SelectedItem;
-            var fy = await _financialYearService.GetFinancialYearAsync(item.FinancialYearId);
+            var row = dgvFinancialYears.SelectedRows[0];
+            var fyId = (long)row.Tag;
+            var fy = await _financialYearService.GetFinancialYearAsync(fyId);
 
             if (fy != null)
             {
@@ -85,7 +89,7 @@ namespace FruitAccounting.UI
 
         private async void btnDelete_Click(object sender, EventArgs e)
         {
-            if (lstFinancialYears.SelectedItem == null)
+            if (dgvFinancialYears.SelectedRows.Count == 0)
             {
                 MessageBox.Show("Please select a financial year to delete.", "Info");
                 return;
@@ -95,8 +99,9 @@ namespace FruitAccounting.UI
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
 
-            var item = (FinancialYearListItem)lstFinancialYears.SelectedItem;
-            var (success, message) = await _financialYearService.DeleteFinancialYearAsync(item.FinancialYearId);
+            var row = dgvFinancialYears.SelectedRows[0];
+            var fyId = (long)row.Tag;
+            var (success, message) = await _financialYearService.DeleteFinancialYearAsync(fyId);
 
             if (success)
             {
@@ -109,36 +114,24 @@ namespace FruitAccounting.UI
             }
         }
 
-        private void btnSelect_Click(object sender, EventArgs e)
-        {
-            if (lstFinancialYears.SelectedItem == null)
-            {
-                MessageBox.Show("Please select a financial year.", "Info");
-                return;
-            }
-
-            var item = (FinancialYearListItem)lstFinancialYears.SelectedItem;
-            SelectedFinancialYearId = item.FinancialYearId;
-            DialogResult = DialogResult.OK;
-            Close();
-        }
-
         private void btnCancel_Click(object sender, EventArgs e)
         {
             DialogResult = DialogResult.Cancel;
             Close();
         }
 
-        private class FinancialYearListItem
+        private void SelectFinancialYear()
         {
-            public long FinancialYearId { get; set; }
-            public string Code { get; set; } = string.Empty;
-            public DateOnly StartDate { get; set; }
-            public DateOnly EndDate { get; set; }
-            public bool IsActive { get; set; }
-            public bool IsClosed { get; set; }
+            if (dgvFinancialYears.SelectedRows.Count == 0)
+            {
+                MessageBox.Show("Please select a financial year.", "Info");
+                return;
+            }
 
-            public string DisplayText => $"{Code} ({StartDate:dd-MMM-yyyy} to {EndDate:dd-MMM-yyyy}) - {(IsActive ? "Active" : "Inactive")}{(IsClosed ? " (Closed)" : "")}";
+            var row = dgvFinancialYears.SelectedRows[0];
+            SelectedFinancialYearId = (long)row.Tag;
+            DialogResult = DialogResult.OK;
+            Close();
         }
     }
 }

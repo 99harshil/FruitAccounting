@@ -97,7 +97,7 @@ namespace FruitAccounting.UI
             }
 
             // Show main shell
-            using var mainShell = new MainShell(userPreferencesService, loggedInUser, selectedFinancialYear);
+            using var mainShell = new MainShell(userPreferencesService, loggedInUser, selectedFinancialYear, userCompany);
             if (mainShell.ShowDialog() != DialogResult.OK)
                 return;   // User logged off
         }
