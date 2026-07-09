@@ -308,6 +308,11 @@ namespace FruitAccounting.UI
                     if (daybookService != null)
                         newForm = new DaybookForm(daybookService, _company.CompanyId);
                     break;
+                case "Region":
+                    var regionService = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    if (regionService != null)
+                        newForm = new RegionForm(regionService, _company.CompanyId);
+                    break;
                 // Transaction forms
                 case "Purchase":
                     newForm = new Form { Text = "Purchase Entry", MdiParent = this };
