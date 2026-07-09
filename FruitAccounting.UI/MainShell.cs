@@ -1,6 +1,9 @@
 using FruitAccounting.Core.services;
 using FruitAccounting.Data.Entities;
 using FruitAccounting.Data.Enums;
+using FruitAccounting.Data.Context;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.EntityFrameworkCore;
 
 namespace FruitAccounting.UI
 {
@@ -267,7 +270,29 @@ namespace FruitAccounting.UI
             Form? newForm = null;
             switch (formKey)
             {
-                // Add all form instantiations here
+                // User Manager forms
+                case "CreateUser":
+                    var userService = Program.ServiceProvider?.GetService(typeof(UserService)) as UserService;
+                    if (userService != null)
+                        newForm = new CreateUserForm(userService);
+                    break;
+                case "UserRights":
+                    userService = Program.ServiceProvider?.GetService(typeof(UserService)) as UserService;
+                    if (userService != null)
+                        newForm = new UserRightsForm(userService);
+                    break;
+                case "DeleteUser":
+                    userService = Program.ServiceProvider?.GetService(typeof(UserService)) as UserService;
+                    if (userService != null)
+                        newForm = new DeleteUserForm(userService);
+                    break;
+                case "CompanyRights":
+                    userService = Program.ServiceProvider?.GetService(typeof(UserService)) as UserService;
+                    var contextFactory = Program.ServiceProvider?.GetService(typeof(IDbContextFactory<FruitAccountingContext>)) as IDbContextFactory<FruitAccountingContext>;
+                    if (userService != null && contextFactory != null)
+                        newForm = new CompanyRightsForm(userService, contextFactory);
+                    break;
+                // Transaction forms
                 case "Purchase":
                     newForm = new Form { Text = "Purchase Entry", MdiParent = this };
                     break;
@@ -307,7 +332,10 @@ namespace FruitAccounting.UI
             {
                 _openForms[formKey] = newForm;
                 newForm.FormClosed += (s, e) => _openForms.Remove(formKey);
-                newForm.Show();
+                if (newForm.MdiParent == null)
+                    newForm.ShowDialog();
+                else
+                    newForm.Show();
             }
         }
 

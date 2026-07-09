@@ -13,6 +13,7 @@ namespace FruitAccounting.UI
     internal static class Program
     {
         public static string ConnectionString { get; private set; } = string.Empty;
+        public static IServiceProvider? ServiceProvider { get; private set; }
 
         [STAThread]
         static async Task Main()
@@ -49,10 +50,13 @@ namespace FruitAccounting.UI
                     services.AddScoped<AuthService>();
                     services.AddScoped<FinancialYearService>();
                     services.AddScoped<UserPreferencesService>();
+                    services.AddScoped<UserService>();
                     services.AddTransient<LoginForm>();
                     services.AddTransient<Form1>();
                 })
                 .Build();
+
+            ServiceProvider = host.Services;
 
             // Warm up EF Core model compilation at startup so first login is instant
             using (var warmupScope = host.Services.CreateScope())
@@ -62,44 +66,52 @@ namespace FruitAccounting.UI
                 _ = warmupContext.Users.AsNoTracking().FirstOrDefault();
             }
 
-            using var scope = host.Services.CreateScope();
-
-            using var loginForm = scope.ServiceProvider.GetRequiredService<LoginForm>();
-            if (loginForm.ShowDialog() != DialogResult.OK)
-                return;   // user cancelled — exit cleanly
-
-            var loggedInUser = loginForm.LoggedInUser!;
-            var financialYearService = scope.ServiceProvider.GetRequiredService<FinancialYearService>();
-            var userPreferencesService = scope.ServiceProvider.GetRequiredService<UserPreferencesService>();
-            var appContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<FruitAccountingContext>>();
-
-            // Get user's first company from database
-            using var context = appContextFactory.CreateDbContext();
-            var userCompany = await context.Companies.AsNoTracking().FirstOrDefaultAsync();
-
-            if (userCompany == null)
+            bool continueLoop = true;
+            while (continueLoop)
             {
-                MessageBox.Show("No company found in database.", "Error");
-                return;
+                using var scope = host.Services.CreateScope();
+
+                using var loginForm = scope.ServiceProvider.GetRequiredService<LoginForm>();
+                if (loginForm.ShowDialog() != DialogResult.OK)
+                {
+                    continueLoop = false;
+                    break;   // user cancelled — exit cleanly
+                }
+
+                var loggedInUser = loginForm.LoggedInUser!;
+                var financialYearService = scope.ServiceProvider.GetRequiredService<FinancialYearService>();
+                var userPreferencesService = scope.ServiceProvider.GetRequiredService<UserPreferencesService>();
+                var appContextFactory = scope.ServiceProvider.GetRequiredService<IDbContextFactory<FruitAccountingContext>>();
+
+                // Get user's first company from database
+                using var context = appContextFactory.CreateDbContext();
+                var userCompany = await context.Companies.AsNoTracking().FirstOrDefaultAsync();
+
+                if (userCompany == null)
+                {
+                    MessageBox.Show("No company found in database.", "Error");
+                    continueLoop = false;
+                    break;
+                }
+
+                using var fyForm = new FinancialYearManagementForm(financialYearService, userCompany);
+                if (fyForm.ShowDialog() != DialogResult.OK)
+                    continue;   // user cancelled — show login again
+
+                var selectedFinancialYearId = fyForm.SelectedFinancialYearId;
+                var selectedFinancialYear = await financialYearService.GetFinancialYearAsync(selectedFinancialYearId);
+
+                if (selectedFinancialYear == null)
+                {
+                    MessageBox.Show("Error loading financial year.", "Error");
+                    continue;
+                }
+
+                // Show main shell
+                using var mainShell = new MainShell(userPreferencesService, loggedInUser, selectedFinancialYear, userCompany);
+                if (mainShell.ShowDialog() != DialogResult.OK)
+                    continue;   // User logged off — show login again
             }
-
-            using var fyForm = new FinancialYearManagementForm(financialYearService, userCompany);
-            if (fyForm.ShowDialog() != DialogResult.OK)
-                return;   // user cancelled — exit cleanly
-
-            var selectedFinancialYearId = fyForm.SelectedFinancialYearId;
-            var selectedFinancialYear = await financialYearService.GetFinancialYearAsync(selectedFinancialYearId);
-
-            if (selectedFinancialYear == null)
-            {
-                MessageBox.Show("Error loading financial year.", "Error");
-                return;
-            }
-
-            // Show main shell
-            using var mainShell = new MainShell(userPreferencesService, loggedInUser, selectedFinancialYear, userCompany);
-            if (mainShell.ShowDialog() != DialogResult.OK)
-                return;   // User logged off
         }
     }
 }
