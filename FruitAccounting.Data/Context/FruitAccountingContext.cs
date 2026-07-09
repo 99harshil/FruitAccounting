@@ -223,6 +223,47 @@ public partial class FruitAccountingContext : DbContext
                 .HasPrecision(6, 3)
                 .HasDefaultValueSql("0")
                 .HasColumnName("vatav_pct");
+            entity.Property(e => e.Country)
+                .HasMaxLength(50)
+                .HasColumnName("country");
+            entity.Property(e => e.ContactPerson)
+                .HasMaxLength(100)
+                .HasColumnName("contact_person");
+            entity.Property(e => e.Fax)
+                .HasMaxLength(30)
+                .HasColumnName("fax");
+            entity.Property(e => e.AamanatPct)
+                .HasPrecision(6, 3)
+                .HasColumnName("aamanat_pct");
+            entity.Property(e => e.CrateDeposit)
+                .HasPrecision(14, 2)
+                .HasColumnName("crate_deposit");
+            entity.Property(e => e.Labour)
+                .HasPrecision(14, 2)
+                .HasColumnName("labour");
+            entity.Property(e => e.IsTdsApplicable)
+                .HasDefaultValue(true)
+                .HasColumnName("is_tds_applicable");
+            entity.Property(e => e.NameInBank)
+                .HasMaxLength(100)
+                .HasColumnName("name_in_bank");
+            entity.Property(e => e.TinNo)
+                .HasMaxLength(30)
+                .HasColumnName("tin_no");
+            entity.Property(e => e.CstNo)
+                .HasMaxLength(30)
+                .HasColumnName("cst_no");
+            entity.Property(e => e.TdsHead)
+                .HasMaxLength(50)
+                .HasColumnName("tds_head");
+            entity.Property(e => e.EditPin)
+                .HasMaxLength(20)
+                .HasColumnName("edit_pin");
+            entity.Property(e => e.AmanatPartyId).HasColumnName("amanat_party_id");
+
+            entity.HasOne(d => d.AmanatParty).WithMany(p => p.InverseAmanatParty)
+                .HasForeignKey(d => d.AmanatPartyId)
+                .HasConstraintName("accounts_amanat_party_id_fkey");
 
             entity.HasOne(d => d.AccountGroup).WithMany(p => p.Accounts)
                 .HasForeignKey(d => d.AccountGroupId)

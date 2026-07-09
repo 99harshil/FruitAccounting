@@ -54,6 +54,7 @@ namespace FruitAccounting.UI
                     services.AddScoped<AccountGroupService>();
                     services.AddScoped<DaybookService>();
                     services.AddScoped<RegionService>();
+                    services.AddScoped<AccountService>();
                     services.AddTransient<LoginForm>();
                     services.AddTransient<Form1>();
                 })

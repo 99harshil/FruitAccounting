@@ -68,9 +68,39 @@ public partial class Account
 
     public long? MergedInto { get; set; }
 
+    public string? Country { get; set; }
+
+    public string? ContactPerson { get; set; }
+
+    public string? Fax { get; set; }
+
+    public decimal? AamanatPct { get; set; }
+
+    public decimal? CrateDeposit { get; set; }
+
+    public decimal? Labour { get; set; }
+
+    public bool IsTdsApplicable { get; set; } = true;
+
+    public string? NameInBank { get; set; }
+
+    public string? TinNo { get; set; }
+
+    public string? CstNo { get; set; }
+
+    public string? TdsHead { get; set; }
+
+    public string? EditPin { get; set; }
+
+    public long? AmanatPartyId { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
+
+    public virtual Account? AmanatParty { get; set; }
+
+    public virtual ICollection<Account> InverseAmanatParty { get; set; } = new List<Account>();
 
     public virtual AccountGroup AccountGroup { get; set; } = null!;
 
