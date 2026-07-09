@@ -303,6 +303,11 @@ namespace FruitAccounting.UI
                     if (accountGroupService != null)
                         newForm = new SubGroupForm(accountGroupService, _company.CompanyId);
                     break;
+                case "Daybook":
+                    var daybookService = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    if (daybookService != null)
+                        newForm = new DaybookForm(daybookService, _company.CompanyId);
+                    break;
                 // Transaction forms
                 case "Purchase":
                     newForm = new Form { Text = "Purchase Entry", MdiParent = this };
