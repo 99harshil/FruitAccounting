@@ -265,6 +265,9 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.IsSystem)
                 .HasDefaultValue(false)
                 .HasColumnName("is_system");
+            entity.Property(e => e.IsActive)
+                .HasDefaultValue(true)
+                .HasColumnName("is_active");
             entity.Property(e => e.Name)
                 .HasMaxLength(60)
                 .HasColumnName("name");

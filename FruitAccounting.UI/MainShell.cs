@@ -292,6 +292,12 @@ namespace FruitAccounting.UI
                     if (userService != null && contextFactory != null)
                         newForm = new CompanyRightsForm(userService, contextFactory);
                     break;
+                // Master forms
+                case "MainGroup":
+                    var accountGroupService = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    if (accountGroupService != null)
+                        newForm = new MainGroupForm(accountGroupService, _company.CompanyId);
+                    break;
                 // Transaction forms
                 case "Purchase":
                     newForm = new Form { Text = "Purchase Entry", MdiParent = this };

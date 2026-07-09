@@ -19,6 +19,8 @@ public partial class AccountGroup
 
     public bool IsSystem { get; set; }
 
+    public bool IsActive { get; set; } = true;
+
     public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
 
     public virtual Company Company { get; set; } = null!;
