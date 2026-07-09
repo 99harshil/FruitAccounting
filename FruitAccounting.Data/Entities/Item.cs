@@ -25,7 +25,7 @@ public partial class Item
 
     public bool UsesCrate { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     public virtual ICollection<ColdStorageTransactionItem> ColdStorageTransactionItems { get; set; } = new List<ColdStorageTransactionItem>();
 

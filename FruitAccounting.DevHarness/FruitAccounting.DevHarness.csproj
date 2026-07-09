@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <UseWindowsForms>true</UseWindowsForms>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\FruitAccounting.Core\FruitAccounting.Core.csproj" />
+    <ProjectReference Include="..\FruitAccounting.Data\FruitAccounting.Data.csproj" />
+    <ProjectReference Include="..\FruitAccounting.UI\FruitAccounting.UI.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="..\FruitAccounting.UI\appsettings.json" Link="appsettings.json">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </None>
+  </ItemGroup>
+
+</Project>

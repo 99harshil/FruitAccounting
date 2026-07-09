@@ -15,7 +15,7 @@ public partial class Salesman
 
     public decimal? CommissionPct { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     public virtual ICollection<Account> Accounts { get; set; } = new List<Account>();
 

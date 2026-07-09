@@ -325,6 +325,19 @@ namespace FruitAccounting.UI
                     if (itemCategoryService != null)
                         newForm = new ItemCategoryForm(itemCategoryService, _company.CompanyId);
                     break;
+                case "Item":
+                    var itemService = Program.ServiceProvider?.GetService(typeof(ItemService)) as ItemService;
+                    itemGroupService = Program.ServiceProvider?.GetService(typeof(ItemGroupService)) as ItemGroupService;
+                    itemCategoryService = Program.ServiceProvider?.GetService(typeof(ItemCategoryService)) as ItemCategoryService;
+                    if (itemService != null && itemGroupService != null && itemCategoryService != null)
+                        newForm = new ItemForm(itemService, itemGroupService, itemCategoryService, _company.CompanyId);
+                    break;
+                case "ItemCount":
+                    var itemCountService = Program.ServiceProvider?.GetService(typeof(ItemCountService)) as ItemCountService;
+                    itemGroupService = Program.ServiceProvider?.GetService(typeof(ItemGroupService)) as ItemGroupService;
+                    if (itemCountService != null && itemGroupService != null)
+                        newForm = new ItemCountForm(itemCountService, itemGroupService, _company.CompanyId);
+                    break;
                 case "Daybook":
                     var daybookService = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
                     if (daybookService != null)

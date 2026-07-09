@@ -15,7 +15,7 @@ public partial class FinancialYear
 
     public DateOnly EndDate { get; set; }
 
-    public bool IsActive { get; set; }
+    public bool IsActive { get; set; } = true;
 
     public bool IsClosed { get; set; }
 
