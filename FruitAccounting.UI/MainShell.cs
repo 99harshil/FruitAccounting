@@ -298,6 +298,11 @@ namespace FruitAccounting.UI
                     if (accountGroupService != null)
                         newForm = new MainGroupForm(accountGroupService, _company.CompanyId);
                     break;
+                case "SubGroup":
+                    accountGroupService = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    if (accountGroupService != null)
+                        newForm = new SubGroupForm(accountGroupService, _company.CompanyId);
+                    break;
                 // Transaction forms
                 case "Purchase":
                     newForm = new Form { Text = "Purchase Entry", MdiParent = this };
