@@ -310,6 +310,11 @@ namespace FruitAccounting.UI
                     if (accountService != null && accountGroupService != null && regionServiceForAccount != null)
                         newForm = new AccountForm(accountService, accountGroupService, regionServiceForAccount, _company.CompanyId);
                     break;
+                case "Country":
+                    var countryService = Program.ServiceProvider?.GetService(typeof(CountryService)) as CountryService;
+                    if (countryService != null)
+                        newForm = new CountryForm(countryService, _company.CompanyId);
+                    break;
                 case "Daybook":
                     var daybookService = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
                     if (daybookService != null)

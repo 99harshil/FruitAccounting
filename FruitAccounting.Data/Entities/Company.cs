@@ -45,6 +45,8 @@ public partial class Company
 
     public virtual ICollection<AuditLog> AuditLogs { get; set; } = new List<AuditLog>();
 
+    public virtual ICollection<Country> Countries { get; set; } = new List<Country>();
+
     public virtual ICollection<Daybook> Daybooks { get; set; } = new List<Daybook>();
 
     public virtual ICollection<FinancialYear> FinancialYears { get; set; } = new List<FinancialYear>();

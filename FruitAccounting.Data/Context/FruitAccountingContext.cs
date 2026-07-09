@@ -32,6 +32,8 @@ public partial class FruitAccountingContext : DbContext
 
     public virtual DbSet<Company> Companies { get; set; }
 
+    public virtual DbSet<Country> Countries { get; set; }
+
     public virtual DbSet<CrateTransaction> CrateTransactions { get; set; }
 
     public virtual DbSet<CrateTransactionItem> CrateTransactionItems { get; set; }
@@ -644,6 +646,28 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.Phone)
                 .HasMaxLength(20)
                 .HasColumnName("phone");
+        });
+
+        modelBuilder.Entity<Country>(entity =>
+        {
+            entity.HasKey(e => e.CountryId).HasName("countries_pkey");
+
+            entity.ToTable("countries");
+
+            entity.HasIndex(e => new { e.CompanyId, e.Name }, "countries_company_id_name_key").IsUnique();
+
+            entity.Property(e => e.CountryId)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("country_id");
+            entity.Property(e => e.CompanyId).HasColumnName("company_id");
+            entity.Property(e => e.Name)
+                .HasMaxLength(100)
+                .HasColumnName("name");
+
+            entity.HasOne(d => d.Company).WithMany(p => p.Countries)
+                .HasForeignKey(d => d.CompanyId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("countries_company_id_fkey");
         });
 
         modelBuilder.Entity<CrateTransaction>(entity =>
