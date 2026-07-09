@@ -113,6 +113,9 @@ namespace FruitAccounting.UI
                         itemNode.Tag = $"{mainMenu}/{subMenu1}/{item}";
                     }
                 }
+
+                // Expand the main node so children are visible
+                mainNode.Expand();
             }
         }
 
@@ -122,36 +125,73 @@ namespace FruitAccounting.UI
 
             _updatingTree = true;
 
-            // If parent is checked, check all children
-            if (e.Node.Checked)
+            try
             {
-                foreach (TreeNode child in e.Node.Nodes)
+                // If parent is checked, recursively check all descendants
+                if (e.Node.Checked)
                 {
-                    child.Checked = true;
+                    CheckAllDescendants(e.Node);
+                }
+                // If parent is unchecked, recursively uncheck all descendants
+                else
+                {
+                    UncheckAllDescendants(e.Node);
+                }
+
+                // Update all ancestors up the tree
+                UpdateAncestors(e.Node.Parent);
+            }
+            finally
+            {
+                _updatingTree = false;
+            }
+        }
+
+        private void CheckAllDescendants(TreeNode node)
+        {
+            foreach (TreeNode child in node.Nodes)
+            {
+                child.Checked = true;
+                if (child.Nodes.Count > 0)
+                {
+                    CheckAllDescendants(child);
                 }
             }
-            // If parent is unchecked, uncheck all children
-            else
+        }
+
+        private void UncheckAllDescendants(TreeNode node)
+        {
+            foreach (TreeNode child in node.Nodes)
             {
-                foreach (TreeNode child in e.Node.Nodes)
+                child.Checked = false;
+                if (child.Nodes.Count > 0)
                 {
-                    child.Checked = false;
+                    UncheckAllDescendants(child);
                 }
             }
+        }
 
-            // Update parent checkbox state if all children are checked/unchecked
-            if (e.Node.Parent != null)
-            {
-                bool allChildrenChecked = e.Node.Parent.Nodes.Cast<TreeNode>().All(n => n.Checked);
-                bool anyChildrenChecked = e.Node.Parent.Nodes.Cast<TreeNode>().Any(n => n.Checked);
+        private void TvMenuHierarchy_BeforeCheck(object? sender, TreeViewCancelEventArgs e)
+        {
+            // Placeholder for any pre-check logic
+        }
 
-                if (allChildrenChecked)
-                    e.Node.Parent.Checked = true;
-                else if (!anyChildrenChecked)
-                    e.Node.Parent.Checked = false;
-            }
+        private void UpdateAncestors(TreeNode? node)
+        {
+            if (node == null) return;
 
-            _updatingTree = false;
+            // Check if all children are checked
+            bool allChildrenChecked = node.Nodes.Cast<TreeNode>().All(n => n.Checked);
+            bool anyChildrenChecked = node.Nodes.Cast<TreeNode>().Any(n => n.Checked);
+
+            if (allChildrenChecked)
+                node.Checked = true;
+            else if (!anyChildrenChecked)
+                node.Checked = false;
+            // If some but not all are checked, leave parent as is
+
+            // Recursively update parent
+            UpdateAncestors(node.Parent);
         }
 
         private void TvMenuHierarchy_AfterSelect(object? sender, TreeViewEventArgs e)
@@ -199,8 +239,9 @@ namespace FruitAccounting.UI
                 if (node.Checked)
                 {
                     result.Add(node);
-                    result.AddRange(GetAllCheckedNodes(node.Nodes));
                 }
+                // ALWAYS recurse into children, even if parent is not checked
+                result.AddRange(GetAllCheckedNodes(node.Nodes));
             }
             return result;
         }
@@ -227,9 +268,15 @@ namespace FruitAccounting.UI
 
                 // Check nodes based on permissions
                 _updatingTree = true;
-                UncheckAllNodes(tvMenuHierarchy.Nodes);
-                CheckPermissionNodes(tvMenuHierarchy.Nodes);
-                _updatingTree = false;
+                try
+                {
+                    UncheckAllNodes(tvMenuHierarchy.Nodes);
+                    CheckPermissionNodes(tvMenuHierarchy.Nodes);
+                }
+                finally
+                {
+                    _updatingTree = false;
+                }
 
                 UpdatePermissionsGrid();
             }
@@ -255,16 +302,28 @@ namespace FruitAccounting.UI
         public void SelectAllPermissions()
         {
             _updatingTree = true;
-            CheckAllNodes(tvMenuHierarchy.Nodes);
-            _updatingTree = false;
+            try
+            {
+                CheckAllNodes(tvMenuHierarchy.Nodes);
+            }
+            finally
+            {
+                _updatingTree = false;
+            }
             UpdatePermissionsGrid();
         }
 
         public void ClearAllPermissions()
         {
             _updatingTree = true;
-            UncheckAllNodes(tvMenuHierarchy.Nodes);
-            _updatingTree = false;
+            try
+            {
+                UncheckAllNodes(tvMenuHierarchy.Nodes);
+            }
+            finally
+            {
+                _updatingTree = false;
+            }
             UpdatePermissionsGrid();
         }
 
@@ -294,9 +353,10 @@ namespace FruitAccounting.UI
                 return;
             }
 
-            var permissions = new List<UserPermission>();
             var checkedNodes = GetAllCheckedNodes(tvMenuHierarchy.Nodes);
+            var permissions = new List<UserPermission>();
 
+            // Collect all checked leaf nodes
             foreach (var node in checkedNodes)
             {
                 if (node.Nodes.Count == 0) // Only save leaf nodes
@@ -318,16 +378,8 @@ namespace FruitAccounting.UI
 
             if (success)
             {
-                // Update in-memory permissions immediately
-                _permissions.Clear();
-                foreach (var perm in permissions)
-                {
-                    _permissions[perm.MenuKey] = perm;
-                }
-
-                // Refresh the grid to show updated permissions
-                UpdatePermissionsGrid();
-
+                // Reload from database to ensure we have the latest data
+                await LoadUserPermissions();
                 MessageBox.Show(message, "Success");
             }
             else
