@@ -41,6 +41,11 @@ namespace FruitAccounting.Data.Migrations
 
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("AccountId"));
 
+                    b.Property<decimal?>("AamanatPct")
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("aamanat_pct");
+
                     b.Property<long>("AccountGroupId")
                         .HasColumnType("bigint")
                         .HasColumnName("account_group_id");
@@ -54,6 +59,10 @@ namespace FruitAccounting.Data.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("address2");
+
+                    b.Property<long?>("AmanatPartyId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("amanat_party_id");
 
                     b.Property<string>("BankAccountNo")
                         .HasMaxLength(30)
@@ -97,6 +106,25 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("company_id");
 
+                    b.Property<string>("ContactPerson")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("contact_person");
+
+                    b.Property<string>("Country")
+                        .HasMaxLength(50)
+                        .HasColumnType("character varying(50)")
+                        .HasColumnName("country");
+
+                    b.Property<long?>("CountryId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("country_id");
+
+                    b.Property<decimal?>("CrateDeposit")
+                        .HasPrecision(10, 2)
+                        .HasColumnType("numeric(10,2)")
+                        .HasColumnName("crate_deposit");
+
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
                         .HasColumnType("timestamp with time zone")
@@ -112,14 +140,29 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnType("numeric(14,2)")
                         .HasColumnName("credit_limit");
 
+                    b.Property<string>("CstNo")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("cst_no");
+
                     b.Property<PurchaseMode?>("DefaultPurchaseMode")
                         .HasColumnType("purchase_mode")
                         .HasColumnName("default_purchase_mode");
+
+                    b.Property<string>("EditPin")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("edit_pin");
 
                     b.Property<string>("Email")
                         .HasMaxLength(100)
                         .HasColumnType("character varying(100)")
                         .HasColumnName("email");
+
+                    b.Property<string>("Fax")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("fax");
 
                     b.Property<decimal?>("InterestPct")
                         .ValueGeneratedOnAdd()
@@ -140,6 +183,24 @@ namespace FruitAccounting.Data.Migrations
                         .HasDefaultValue(false)
                         .HasColumnName("is_blocked");
 
+                    b.Property<bool>("IsTdsApplicable")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_tds_applicable");
+
+                    b.Property<decimal?>("Labour")
+                        .HasPrecision(14, 2)
+                        .HasColumnType("numeric(14,2)")
+                        .HasColumnName("labour");
+
+                    b.Property<decimal?>("LabourPct")
+                        .ValueGeneratedOnAdd()
+                        .HasPrecision(6, 2)
+                        .HasColumnType("numeric(6,2)")
+                        .HasColumnName("labour_pct")
+                        .HasDefaultValueSql("0");
+
                     b.Property<long?>("MergedInto")
                         .HasColumnType("bigint")
                         .HasColumnName("merged_into");
@@ -155,15 +216,38 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnType("character varying(80)")
                         .HasColumnName("name");
 
+                    b.Property<string>("NameInBank")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("name_in_bank");
+
                     b.Property<string>("PanNo")
                         .HasMaxLength(15)
                         .HasColumnType("character varying(15)")
                         .HasColumnName("pan_no");
 
+                    b.Property<long?>("PartyGroupId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("party_group_id");
+
+                    b.Property<string>("PersonName")
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("person_name");
+
                     b.Property<string>("Phone")
                         .HasMaxLength(20)
                         .HasColumnType("character varying(20)")
                         .HasColumnName("phone");
+
+                    b.Property<string>("PhoneResidence")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("phone_residence");
+
+                    b.Property<byte[]>("Photo")
+                        .HasColumnType("bytea")
+                        .HasColumnName("photo");
 
                     b.Property<string>("PinCode")
                         .HasMaxLength(10)
@@ -183,6 +267,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnType("bigint")
                         .HasColumnName("salesman_id");
 
+                    b.Property<string>("TdsHead")
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("tds_head");
+
                     b.Property<decimal?>("TdsPct")
                         .HasPrecision(6, 3)
                         .HasColumnType("numeric(6,3)")
@@ -192,6 +281,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
                         .HasColumnName("tds_threshold");
+
+                    b.Property<string>("TinNo")
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("tin_no");
 
                     b.Property<DateTime>("UpdatedAt")
                         .ValueGeneratedOnAdd()
@@ -209,7 +303,13 @@ namespace FruitAccounting.Data.Migrations
                     b.HasKey("AccountId")
                         .HasName("accounts_pkey");
 
+                    b.HasIndex("AmanatPartyId");
+
+                    b.HasIndex("CountryId");
+
                     b.HasIndex("MergedInto");
+
+                    b.HasIndex("PartyGroupId");
 
                     b.HasIndex("SalesmanId");
 
@@ -244,7 +344,10 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("company_id");
 
                     b.Property<bool>("IsActive")
-                        .HasColumnType("boolean");
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("boolean")
+                        .HasDefaultValue(true)
+                        .HasColumnName("is_active");
 
                     b.Property<bool>("IsSystem")
                         .ValueGeneratedOnAdd()
@@ -290,9 +393,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("financial_year_id");
 
                     b.Property<decimal>("Amount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("amount");
+                        .HasColumnName("amount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<DrCr>("Side")
                         .HasColumnType("dr_cr")
@@ -487,18 +592,22 @@ namespace FruitAccounting.Data.Migrations
                     NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("StatementLineId"));
 
                     b.Property<decimal>("Credit")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("credit");
+                        .HasColumnName("credit")
+                        .HasDefaultValueSql("0");
 
                     b.Property<long>("DaybookId")
                         .HasColumnType("bigint")
                         .HasColumnName("daybook_id");
 
                     b.Property<decimal>("Debit")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("debit");
+                        .HasColumnName("debit")
+                        .HasDefaultValueSql("0");
 
                     b.Property<string>("Description")
                         .HasMaxLength(255)
@@ -751,6 +860,34 @@ namespace FruitAccounting.Data.Migrations
                     b.ToTable("companies", (string)null);
                 });
 
+            modelBuilder.Entity("FruitAccounting.Data.Entities.Country", b =>
+                {
+                    b.Property<long>("CountryId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint")
+                        .HasColumnName("country_id");
+
+                    NpgsqlPropertyBuilderExtensions.UseIdentityAlwaysColumn(b.Property<long>("CountryId"));
+
+                    b.Property<long>("CompanyId")
+                        .HasColumnType("bigint")
+                        .HasColumnName("company_id");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(60)
+                        .HasColumnType("character varying(60)")
+                        .HasColumnName("name");
+
+                    b.HasKey("CountryId")
+                        .HasName("countries_pkey");
+
+                    b.HasIndex(new[] { "CompanyId", "Name" }, "countries_company_id_name_key")
+                        .IsUnique();
+
+                    b.ToTable("countries", (string)null);
+                });
+
             modelBuilder.Entity("FruitAccounting.Data.Entities.CrateTransaction", b =>
                 {
                     b.Property<long>("CrateTxnId")
@@ -841,7 +978,7 @@ namespace FruitAccounting.Data.Migrations
 
                     b.Property<decimal>("Quantity")
                         .HasPrecision(10)
-                        .HasColumnType("numeric(10)")
+                        .HasColumnType("numeric(10,0)")
                         .HasColumnName("quantity");
 
                     b.Property<decimal?>("Rate")
@@ -1252,9 +1389,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("invoice_no");
 
                     b.Property<decimal>("NetAmount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("net_amount");
+                        .HasColumnName("net_amount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal?>("OtherCharges")
                         .ValueGeneratedOnAdd()
@@ -1635,14 +1774,18 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("account_id");
 
                     b.Property<decimal>("Credit")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("credit");
+                        .HasColumnName("credit")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal>("Debit")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("debit");
+                        .HasColumnName("debit")
+                        .HasDefaultValueSql("0");
 
                     b.Property<long>("JournalVoucherId")
                         .HasColumnType("bigint")
@@ -1701,14 +1844,18 @@ namespace FruitAccounting.Data.Migrations
                         .HasDefaultValueSql("now()");
 
                     b.Property<decimal>("Credit")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("credit");
+                        .HasColumnName("credit")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal>("Debit")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("debit");
+                        .HasColumnName("debit")
+                        .HasDefaultValueSql("0");
 
                     b.Property<DateOnly>("EntryDate")
                         .HasColumnType("date")
@@ -1933,9 +2080,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("account_id");
 
                     b.Property<decimal>("Advance")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("advance");
+                        .HasColumnName("advance")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal>("Amount")
                         .HasPrecision(14, 2)
@@ -1980,18 +2129,22 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("daybook_id");
 
                     b.Property<decimal>("Discount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("discount");
+                        .HasColumnName("discount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<long>("FinancialYearId")
                         .HasColumnType("bigint")
                         .HasColumnName("financial_year_id");
 
                     b.Property<decimal>("Hamali")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("hamali");
+                        .HasColumnName("hamali")
+                        .HasDefaultValueSql("0");
 
                     b.Property<bool>("IsFreightPayment")
                         .ValueGeneratedOnAdd()
@@ -2027,19 +2180,25 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("returned_date");
 
                     b.Property<decimal>("TdsAmount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("tds_amount");
+                        .HasColumnName("tds_amount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal>("TotalSettled")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("total_settled");
+                        .HasColumnName("total_settled")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal>("Vatav")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("vatav");
+                        .HasColumnName("vatav")
+                        .HasDefaultValueSql("0");
 
                     b.HasKey("PaymentId")
                         .HasName("payments_pkey");
@@ -2131,14 +2290,18 @@ namespace FruitAccounting.Data.Migrations
                         .HasDefaultValueSql("0");
 
                     b.Property<decimal>("CommissionAmount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("commission_amount");
+                        .HasColumnName("commission_amount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal>("CommissionPct")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(6, 3)
                         .HasColumnType("numeric(6,3)")
-                        .HasColumnName("commission_pct");
+                        .HasColumnName("commission_pct")
+                        .HasDefaultValueSql("0");
 
                     b.Property<DateTime>("CreatedAt")
                         .ValueGeneratedOnAdd()
@@ -2174,9 +2337,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasDefaultValueSql("0");
 
                     b.Property<decimal>("GrossAmount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("gross_amount");
+                        .HasColumnName("gross_amount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal?>("Inam")
                         .ValueGeneratedOnAdd()
@@ -2216,9 +2381,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("mode");
 
                     b.Property<decimal>("NetAmount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("net_amount");
+                        .HasColumnName("net_amount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal?>("OtherDeduction")
                         .ValueGeneratedOnAdd()
@@ -2480,19 +2647,25 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("returned_date");
 
                     b.Property<decimal>("RoundingDiff")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(8, 2)
                         .HasColumnType("numeric(8,2)")
-                        .HasColumnName("rounding_diff");
+                        .HasColumnName("rounding_diff")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal>("TotalSettled")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("total_settled");
+                        .HasColumnName("total_settled")
+                        .HasDefaultValueSql("0");
 
                     b.Property<decimal>("Vatav")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("vatav");
+                        .HasColumnName("vatav")
+                        .HasDefaultValueSql("0");
 
                     b.HasKey("ReceiptId")
                         .HasName("receipts_pkey");
@@ -2538,9 +2711,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("sales_bill_id");
 
                     b.Property<decimal>("VatavAmount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("vatav_amount");
+                        .HasColumnName("vatav_amount")
+                        .HasDefaultValueSql("0");
 
                     b.HasKey("ReceiptAllocationId")
                         .HasName("receipt_allocations_pkey");
@@ -2797,9 +2972,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("is_weekly");
 
                     b.Property<decimal>("NetAmount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("net_amount");
+                        .HasColumnName("net_amount")
+                        .HasDefaultValueSql("0");
 
                     b.Property<DateOnly?>("PeriodFrom")
                         .HasColumnType("date")
@@ -2810,9 +2987,11 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("period_to");
 
                     b.Property<decimal>("TotalAmount")
+                        .ValueGeneratedOnAdd()
                         .HasPrecision(14, 2)
                         .HasColumnType("numeric(14,2)")
-                        .HasColumnName("total_amount");
+                        .HasColumnName("total_amount")
+                        .HasDefaultValueSql("0");
 
                     b.HasKey("SalesBillId")
                         .HasName("sales_bills_pkey");
@@ -3037,8 +3216,10 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("password_hash");
 
                     b.Property<UserRole>("Role")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("user_role")
-                        .HasColumnName("role");
+                        .HasColumnName("role")
+                        .HasDefaultValueSql("'operator'::user_role");
 
                     b.Property<string>("Username")
                         .IsRequired()
@@ -3189,8 +3370,10 @@ namespace FruitAccounting.Data.Migrations
                         .HasColumnName("sent_by");
 
                     b.Property<DispatchStatus>("Status")
+                        .ValueGeneratedOnAdd()
                         .HasColumnType("dispatch_status")
-                        .HasColumnName("status");
+                        .HasColumnName("status")
+                        .HasDefaultValueSql("'queued'::dispatch_status");
 
                     b.Property<DateTime?>("StatusUpdatedAt")
                         .HasColumnType("timestamp with time zone")
@@ -3237,16 +3420,31 @@ namespace FruitAccounting.Data.Migrations
                         .IsRequired()
                         .HasConstraintName("accounts_account_group_id_fkey");
 
+                    b.HasOne("FruitAccounting.Data.Entities.Account", "AmanatParty")
+                        .WithMany("InverseAmanatParty")
+                        .HasForeignKey("AmanatPartyId")
+                        .HasConstraintName("accounts_amanat_party_id_fkey");
+
                     b.HasOne("FruitAccounting.Data.Entities.Company", "Company")
                         .WithMany("Accounts")
                         .HasForeignKey("CompanyId")
                         .IsRequired()
                         .HasConstraintName("accounts_company_id_fkey");
 
+                    b.HasOne("FruitAccounting.Data.Entities.Country", "CountryNavigation")
+                        .WithMany("Accounts")
+                        .HasForeignKey("CountryId")
+                        .HasConstraintName("accounts_country_id_fkey");
+
                     b.HasOne("FruitAccounting.Data.Entities.Account", "MergedIntoNavigation")
                         .WithMany("InverseMergedIntoNavigation")
                         .HasForeignKey("MergedInto")
                         .HasConstraintName("accounts_merged_into_fkey");
+
+                    b.HasOne("FruitAccounting.Data.Entities.Account", "PartyGroup")
+                        .WithMany("InversePartyGroup")
+                        .HasForeignKey("PartyGroupId")
+                        .HasConstraintName("accounts_party_group_id_fkey");
 
                     b.HasOne("FruitAccounting.Data.Entities.Region", "Region")
                         .WithMany("Accounts")
@@ -3260,9 +3458,15 @@ namespace FruitAccounting.Data.Migrations
 
                     b.Navigation("AccountGroup");
 
+                    b.Navigation("AmanatParty");
+
                     b.Navigation("Company");
 
+                    b.Navigation("CountryNavigation");
+
                     b.Navigation("MergedIntoNavigation");
+
+                    b.Navigation("PartyGroup");
 
                     b.Navigation("Region");
 
@@ -3450,6 +3654,17 @@ namespace FruitAccounting.Data.Migrations
                     b.Navigation("Item");
 
                     b.Navigation("Lot");
+                });
+
+            modelBuilder.Entity("FruitAccounting.Data.Entities.Country", b =>
+                {
+                    b.HasOne("FruitAccounting.Data.Entities.Company", "Company")
+                        .WithMany("Countries")
+                        .HasForeignKey("CompanyId")
+                        .IsRequired()
+                        .HasConstraintName("countries_company_id_fkey");
+
+                    b.Navigation("Company");
                 });
 
             modelBuilder.Entity("FruitAccounting.Data.Entities.CrateTransaction", b =>
@@ -4286,7 +4501,11 @@ namespace FruitAccounting.Data.Migrations
 
                     b.Navigation("ImportSales");
 
+                    b.Navigation("InverseAmanatParty");
+
                     b.Navigation("InverseMergedIntoNavigation");
+
+                    b.Navigation("InversePartyGroup");
 
                     b.Navigation("JournalVoucherLines");
 
@@ -4333,6 +4552,8 @@ namespace FruitAccounting.Data.Migrations
 
                     b.Navigation("AuditLogs");
 
+                    b.Navigation("Countries");
+
                     b.Navigation("Daybooks");
 
                     b.Navigation("FinancialYears");
@@ -4350,6 +4571,11 @@ namespace FruitAccounting.Data.Migrations
                     b.Navigation("Salesmen");
 
                     b.Navigation("Transporters");
+                });
+
+            modelBuilder.Entity("FruitAccounting.Data.Entities.Country", b =>
+                {
+                    b.Navigation("Accounts");
                 });
 
             modelBuilder.Entity("FruitAccounting.Data.Entities.CrateTransaction", b =>

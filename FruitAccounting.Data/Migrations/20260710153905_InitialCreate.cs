@@ -8,7 +8,7 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace FruitAccounting.Data.Migrations
 {
     /// <inheritdoc />
-    public partial class AddUserPreferences : Migration
+    public partial class InitialCreate : Migration
     {
         /// <inheritdoc />
         protected override void Up(MigrationBuilder migrationBuilder)
@@ -90,7 +90,7 @@ namespace FruitAccounting.Data.Migrations
                     username = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
                     display_name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
                     password_hash = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: false),
-                    role = table.Column<UserRole>(type: "user_role", nullable: false),
+                    role = table.Column<UserRole>(type: "user_role", nullable: false, defaultValueSql: "'operator'::user_role"),
                     is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
@@ -110,7 +110,8 @@ namespace FruitAccounting.Data.Migrations
                     code = table.Column<string>(type: "character varying(10)", maxLength: 10, nullable: true),
                     name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false),
                     nature = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: false),
-                    is_system = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
+                    is_system = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
+                    is_active = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true)
                 },
                 constraints: table =>
                 {
@@ -125,6 +126,25 @@ namespace FruitAccounting.Data.Migrations
                         column: x => x.parent_id,
                         principalTable: "account_groups",
                         principalColumn: "account_group_id");
+                });
+
+            migrationBuilder.CreateTable(
+                name: "countries",
+                columns: table => new
+                {
+                    country_id = table.Column<long>(type: "bigint", nullable: false)
+                        .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
+                    company_id = table.Column<long>(type: "bigint", nullable: false),
+                    name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: false)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("countries_pkey", x => x.country_id);
+                    table.ForeignKey(
+                        name: "countries_company_id_fkey",
+                        column: x => x.company_id,
+                        principalTable: "companies",
+                        principalColumn: "company_id");
                 });
 
             migrationBuilder.CreateTable(
@@ -544,6 +564,25 @@ namespace FruitAccounting.Data.Migrations
                     default_purchase_mode = table.Column<PurchaseMode>(type: "purchase_mode", nullable: true),
                     remarks = table.Column<string>(type: "character varying(200)", maxLength: 200, nullable: true),
                     merged_into = table.Column<long>(type: "bigint", nullable: true),
+                    country = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
+                    contact_person = table.Column<string>(type: "character varying(100)", maxLength: 100, nullable: true),
+                    fax = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    aamanat_pct = table.Column<decimal>(type: "numeric(6,2)", precision: 6, scale: 2, nullable: true),
+                    crate_deposit = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: true),
+                    labour = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true),
+                    is_tds_applicable = table.Column<bool>(type: "boolean", nullable: false, defaultValue: true),
+                    name_in_bank = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
+                    tin_no = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    cst_no = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    tds_head = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
+                    edit_pin = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    amanat_party_id = table.Column<long>(type: "bigint", nullable: true),
+                    country_id = table.Column<long>(type: "bigint", nullable: true),
+                    labour_pct = table.Column<decimal>(type: "numeric(6,2)", precision: 6, scale: 2, nullable: true, defaultValueSql: "0"),
+                    party_group_id = table.Column<long>(type: "bigint", nullable: true),
+                    person_name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
+                    phone_residence = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
+                    photo = table.Column<byte[]>(type: "bytea", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
@@ -556,13 +595,28 @@ namespace FruitAccounting.Data.Migrations
                         principalTable: "account_groups",
                         principalColumn: "account_group_id");
                     table.ForeignKey(
+                        name: "accounts_amanat_party_id_fkey",
+                        column: x => x.amanat_party_id,
+                        principalTable: "accounts",
+                        principalColumn: "account_id");
+                    table.ForeignKey(
                         name: "accounts_company_id_fkey",
                         column: x => x.company_id,
                         principalTable: "companies",
                         principalColumn: "company_id");
                     table.ForeignKey(
+                        name: "accounts_country_id_fkey",
+                        column: x => x.country_id,
+                        principalTable: "countries",
+                        principalColumn: "country_id");
+                    table.ForeignKey(
                         name: "accounts_merged_into_fkey",
                         column: x => x.merged_into,
+                        principalTable: "accounts",
+                        principalColumn: "account_id");
+                    table.ForeignKey(
+                        name: "accounts_party_group_id_fkey",
+                        column: x => x.party_group_id,
                         principalTable: "accounts",
                         principalColumn: "account_id");
                     table.ForeignKey(
@@ -583,7 +637,7 @@ namespace FruitAccounting.Data.Migrations
                 {
                     account_id = table.Column<long>(type: "bigint", nullable: false),
                     financial_year_id = table.Column<long>(type: "bigint", nullable: false),
-                    amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     side = table.Column<DrCr>(type: "dr_cr", nullable: false)
                 },
                 constraints: table =>
@@ -724,7 +778,7 @@ namespace FruitAccounting.Data.Migrations
                     handling = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
                     other_charges = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
                     commission = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
-                    net_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false)
+                    net_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0")
                 },
                 constraints: table =>
                 {
@@ -749,8 +803,8 @@ namespace FruitAccounting.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
                     journal_voucher_id = table.Column<long>(type: "bigint", nullable: false),
                     account_id = table.Column<long>(type: "bigint", nullable: false),
-                    debit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    credit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    debit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    credit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     narration = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true)
                 },
                 constraints: table =>
@@ -778,8 +832,8 @@ namespace FruitAccounting.Data.Migrations
                     financial_year_id = table.Column<long>(type: "bigint", nullable: false),
                     entry_date = table.Column<DateOnly>(type: "date", nullable: false),
                     account_id = table.Column<long>(type: "bigint", nullable: false),
-                    debit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    credit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    debit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    credit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     voucher_id = table.Column<long>(type: "bigint", nullable: false),
                     voucher_type = table.Column<VoucherType>(type: "voucher_type", nullable: false),
                     bill_no = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
@@ -864,9 +918,9 @@ namespace FruitAccounting.Data.Migrations
                     truck_no = table.Column<string>(type: "character varying(20)", maxLength: 20, nullable: true),
                     mark = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: true),
                     delivery_person = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
-                    gross_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    commission_pct = table.Column<decimal>(type: "numeric(6,3)", precision: 6, scale: 3, nullable: false),
-                    commission_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    gross_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    commission_pct = table.Column<decimal>(type: "numeric(6,3)", precision: 6, scale: 3, nullable: false, defaultValueSql: "0"),
+                    commission_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     market_fee_pct = table.Column<decimal>(type: "numeric(6,3)", precision: 6, scale: 3, nullable: true, defaultValueSql: "0"),
                     market_fee = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
                     freight = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
@@ -879,7 +933,7 @@ namespace FruitAccounting.Data.Migrations
                     dd_charge = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
                     inam = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
                     other_deduction = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
-                    net_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    net_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     our_freight = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
                     our_labour = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
                     our_market_fee = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0"),
@@ -925,8 +979,8 @@ namespace FruitAccounting.Data.Migrations
                     is_weekly = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     period_from = table.Column<DateOnly>(type: "date", nullable: true),
                     period_to = table.Column<DateOnly>(type: "date", nullable: true),
-                    total_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    net_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    total_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    net_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     created_by = table.Column<long>(type: "bigint", nullable: true),
                     created_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()")
                 },
@@ -963,7 +1017,7 @@ namespace FruitAccounting.Data.Migrations
                     period_to = table.Column<DateOnly>(type: "date", nullable: true),
                     pdf_path = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     wa_message_id = table.Column<string>(type: "character varying(80)", maxLength: 80, nullable: true),
-                    status = table.Column<DispatchStatus>(type: "dispatch_status", nullable: false),
+                    status = table.Column<DispatchStatus>(type: "dispatch_status", nullable: false, defaultValueSql: "'queued'::dispatch_status"),
                     status_updated_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     error_detail = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     sent_by = table.Column<long>(type: "bigint", nullable: true),
@@ -992,7 +1046,7 @@ namespace FruitAccounting.Data.Migrations
                         .Annotation("Npgsql:ValueGenerationStrategy", NpgsqlValueGenerationStrategy.IdentityAlwaysColumn),
                     crate_txn_id = table.Column<long>(type: "bigint", nullable: false),
                     crate_type = table.Column<string>(type: "character varying(30)", maxLength: 30, nullable: false),
-                    quantity = table.Column<decimal>(type: "numeric(10)", precision: 10, nullable: false),
+                    quantity = table.Column<decimal>(type: "numeric(10,0)", precision: 10, scale: 0, nullable: false),
                     rate = table.Column<decimal>(type: "numeric(10,2)", precision: 10, scale: 2, nullable: true, defaultValueSql: "0"),
                     amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: true, defaultValueSql: "0")
                 },
@@ -1066,12 +1120,12 @@ namespace FruitAccounting.Data.Migrations
                     bank_name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
                     bank_branch = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
                     amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    tds_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    vatav = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    hamali = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    discount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    advance = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    total_settled = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    tds_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    vatav = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    hamali = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    discount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    advance = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    total_settled = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     is_freight_payment = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     clearance_date = table.Column<DateOnly>(type: "date", nullable: true),
                     is_returned = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
@@ -1122,9 +1176,9 @@ namespace FruitAccounting.Data.Migrations
                     bank_name = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
                     bank_branch = table.Column<string>(type: "character varying(60)", maxLength: 60, nullable: true),
                     amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    vatav = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    rounding_diff = table.Column<decimal>(type: "numeric(8,2)", precision: 8, scale: 2, nullable: false),
-                    total_settled = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    vatav = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    rounding_diff = table.Column<decimal>(type: "numeric(8,2)", precision: 8, scale: 2, nullable: false, defaultValueSql: "0"),
+                    total_settled = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     clearance_date = table.Column<DateOnly>(type: "date", nullable: true),
                     is_returned = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
                     returned_date = table.Column<DateOnly>(type: "date", nullable: true),
@@ -1167,8 +1221,8 @@ namespace FruitAccounting.Data.Migrations
                     statement_date = table.Column<DateOnly>(type: "date", nullable: false),
                     description = table.Column<string>(type: "character varying(255)", maxLength: 255, nullable: true),
                     reference = table.Column<string>(type: "character varying(50)", maxLength: 50, nullable: true),
-                    debit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    credit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    debit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
+                    credit = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     imported_at = table.Column<DateTime>(type: "timestamp with time zone", nullable: false, defaultValueSql: "now()"),
                     matched_ledger_entry_id = table.Column<long>(type: "bigint", nullable: true),
                     reconciled = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false),
@@ -1575,7 +1629,7 @@ namespace FruitAccounting.Data.Migrations
                     receipt_id = table.Column<long>(type: "bigint", nullable: false),
                     sales_bill_id = table.Column<long>(type: "bigint", nullable: false),
                     allocated_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
-                    vatav_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false),
+                    vatav_amount = table.Column<decimal>(type: "numeric(14,2)", precision: 14, scale: 2, nullable: false, defaultValueSql: "0"),
                     flagged_by_ai = table.Column<bool>(type: "boolean", nullable: false, defaultValue: false)
                 },
                 constraints: table =>
@@ -1680,9 +1734,24 @@ namespace FruitAccounting.Data.Migrations
                 column: "region_id");
 
             migrationBuilder.CreateIndex(
+                name: "IX_accounts_amanat_party_id",
+                table: "accounts",
+                column: "amanat_party_id");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_accounts_country_id",
+                table: "accounts",
+                column: "country_id");
+
+            migrationBuilder.CreateIndex(
                 name: "IX_accounts_merged_into",
                 table: "accounts",
                 column: "merged_into");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_accounts_party_group_id",
+                table: "accounts",
+                column: "party_group_id");
 
             migrationBuilder.CreateIndex(
                 name: "IX_accounts_salesman_id",
@@ -1790,6 +1859,12 @@ namespace FruitAccounting.Data.Migrations
                 name: "companies_code_key",
                 table: "companies",
                 column: "code",
+                unique: true);
+
+            migrationBuilder.CreateIndex(
+                name: "countries_company_id_name_key",
+                table: "countries",
+                columns: new[] { "company_id", "name" },
                 unique: true);
 
             migrationBuilder.CreateIndex(
@@ -2416,6 +2491,9 @@ namespace FruitAccounting.Data.Migrations
 
             migrationBuilder.DropTable(
                 name: "account_groups");
+
+            migrationBuilder.DropTable(
+                name: "countries");
 
             migrationBuilder.DropTable(
                 name: "regions");

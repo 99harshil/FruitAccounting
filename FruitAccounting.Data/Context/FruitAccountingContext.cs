@@ -232,13 +232,13 @@ public partial class FruitAccountingContext : DbContext
                 .HasMaxLength(100)
                 .HasColumnName("contact_person");
             entity.Property(e => e.Fax)
-                .HasMaxLength(30)
+                .HasMaxLength(20)
                 .HasColumnName("fax");
             entity.Property(e => e.AamanatPct)
-                .HasPrecision(6, 3)
+                .HasPrecision(6, 2)
                 .HasColumnName("aamanat_pct");
             entity.Property(e => e.CrateDeposit)
-                .HasPrecision(14, 2)
+                .HasPrecision(10, 2)
                 .HasColumnName("crate_deposit");
             entity.Property(e => e.Labour)
                 .HasPrecision(14, 2)
@@ -247,25 +247,46 @@ public partial class FruitAccountingContext : DbContext
                 .HasDefaultValue(true)
                 .HasColumnName("is_tds_applicable");
             entity.Property(e => e.NameInBank)
-                .HasMaxLength(100)
+                .HasMaxLength(60)
                 .HasColumnName("name_in_bank");
             entity.Property(e => e.TinNo)
-                .HasMaxLength(30)
+                .HasMaxLength(20)
                 .HasColumnName("tin_no");
             entity.Property(e => e.CstNo)
-                .HasMaxLength(30)
+                .HasMaxLength(20)
                 .HasColumnName("cst_no");
             entity.Property(e => e.TdsHead)
-                .HasMaxLength(50)
+                .HasMaxLength(30)
                 .HasColumnName("tds_head");
             entity.Property(e => e.EditPin)
                 .HasMaxLength(20)
                 .HasColumnName("edit_pin");
             entity.Property(e => e.AmanatPartyId).HasColumnName("amanat_party_id");
+            entity.Property(e => e.CountryId).HasColumnName("country_id");
+            entity.Property(e => e.LabourPct)
+                .HasPrecision(6, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("labour_pct");
+            entity.Property(e => e.PartyGroupId).HasColumnName("party_group_id");
+            entity.Property(e => e.PersonName)
+                .HasMaxLength(60)
+                .HasColumnName("person_name");
+            entity.Property(e => e.PhoneResidence)
+                .HasMaxLength(20)
+                .HasColumnName("phone_residence");
+            entity.Property(e => e.Photo).HasColumnName("photo");
 
             entity.HasOne(d => d.AmanatParty).WithMany(p => p.InverseAmanatParty)
                 .HasForeignKey(d => d.AmanatPartyId)
                 .HasConstraintName("accounts_amanat_party_id_fkey");
+
+            entity.HasOne(d => d.CountryNavigation).WithMany(p => p.Accounts)
+                .HasForeignKey(d => d.CountryId)
+                .HasConstraintName("accounts_country_id_fkey");
+
+            entity.HasOne(d => d.PartyGroup).WithMany(p => p.InversePartyGroup)
+                .HasForeignKey(d => d.PartyGroupId)
+                .HasConstraintName("accounts_party_group_id_fkey");
 
             entity.HasOne(d => d.AccountGroup).WithMany(p => p.Accounts)
                 .HasForeignKey(d => d.AccountGroupId)
@@ -339,6 +360,7 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.FinancialYearId).HasColumnName("financial_year_id");
             entity.Property(e => e.Amount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("amount");
             entity.Property(e => e.Side).HasColumnName("side");
 
@@ -479,10 +501,12 @@ public partial class FruitAccountingContext : DbContext
                 .HasColumnName("statement_line_id");
             entity.Property(e => e.Credit)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("credit");
             entity.Property(e => e.DaybookId).HasColumnName("daybook_id");
             entity.Property(e => e.Debit)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("debit");
             entity.Property(e => e.Description)
                 .HasMaxLength(255)
@@ -661,7 +685,7 @@ public partial class FruitAccountingContext : DbContext
                 .HasColumnName("country_id");
             entity.Property(e => e.CompanyId).HasColumnName("company_id");
             entity.Property(e => e.Name)
-                .HasMaxLength(100)
+                .HasMaxLength(60)
                 .HasColumnName("name");
 
             entity.HasOne(d => d.Company).WithMany(p => p.Countries)
@@ -732,7 +756,7 @@ public partial class FruitAccountingContext : DbContext
                 .HasMaxLength(30)
                 .HasColumnName("crate_type");
             entity.Property(e => e.Quantity)
-                .HasPrecision(10)
+                .HasPrecision(10, 0)
                 .HasColumnName("quantity");
             entity.Property(e => e.Rate)
                 .HasPrecision(10, 2)
@@ -1014,6 +1038,7 @@ public partial class FruitAccountingContext : DbContext
                 .HasColumnName("invoice_no");
             entity.Property(e => e.NetAmount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("net_amount");
             entity.Property(e => e.OtherCharges)
                 .HasPrecision(14, 2)
@@ -1294,9 +1319,11 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.AccountId).HasColumnName("account_id");
             entity.Property(e => e.Credit)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("credit");
             entity.Property(e => e.Debit)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("debit");
             entity.Property(e => e.JournalVoucherId).HasColumnName("journal_voucher_id");
             entity.Property(e => e.Narration)
@@ -1340,9 +1367,11 @@ public partial class FruitAccountingContext : DbContext
                 .HasColumnName("created_at");
             entity.Property(e => e.Credit)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("credit");
             entity.Property(e => e.Debit)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("debit");
             entity.Property(e => e.EntryDate).HasColumnName("entry_date");
             entity.Property(e => e.FinancialYearId).HasColumnName("financial_year_id");
@@ -1508,6 +1537,7 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.AccountId).HasColumnName("account_id");
             entity.Property(e => e.Advance)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("advance");
             entity.Property(e => e.Amount)
                 .HasPrecision(14, 2)
@@ -1530,10 +1560,12 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.DaybookId).HasColumnName("daybook_id");
             entity.Property(e => e.Discount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("discount");
             entity.Property(e => e.FinancialYearId).HasColumnName("financial_year_id");
             entity.Property(e => e.Hamali)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("hamali");
             entity.Property(e => e.IsFreightPayment)
                 .HasDefaultValue(false)
@@ -1550,12 +1582,15 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.ReturnedDate).HasColumnName("returned_date");
             entity.Property(e => e.TdsAmount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("tds_amount");
             entity.Property(e => e.TotalSettled)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("total_settled");
             entity.Property(e => e.Vatav)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("vatav");
 
             entity.HasOne(d => d.Account).WithMany(p => p.Payments)
@@ -1638,9 +1673,11 @@ public partial class FruitAccountingContext : DbContext
                 .HasColumnName("cold_store");
             entity.Property(e => e.CommissionAmount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("commission_amount");
             entity.Property(e => e.CommissionPct)
                 .HasPrecision(6, 3)
+                .HasDefaultValueSql("0")
                 .HasColumnName("commission_pct");
             entity.Property(e => e.CreatedAt)
                 .HasDefaultValueSql("now()")
@@ -1660,6 +1697,7 @@ public partial class FruitAccountingContext : DbContext
                 .HasColumnName("freight");
             entity.Property(e => e.GrossAmount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("gross_amount");
             entity.Property(e => e.Inam)
                 .HasPrecision(14, 2)
@@ -1683,6 +1721,7 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.Mode).HasColumnName("mode");
             entity.Property(e => e.NetAmount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("net_amount");
             entity.Property(e => e.OtherDeduction)
                 .HasPrecision(14, 2)
@@ -1847,12 +1886,15 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.ReturnedDate).HasColumnName("returned_date");
             entity.Property(e => e.RoundingDiff)
                 .HasPrecision(8, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("rounding_diff");
             entity.Property(e => e.TotalSettled)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("total_settled");
             entity.Property(e => e.Vatav)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("vatav");
 
             entity.HasOne(d => d.Account).WithMany(p => p.Receipts)
@@ -1896,6 +1938,7 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.SalesBillId).HasColumnName("sales_bill_id");
             entity.Property(e => e.VatavAmount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("vatav_amount");
 
             entity.HasOne(d => d.Receipt).WithMany(p => p.ReceiptAllocations)
@@ -2076,11 +2119,13 @@ public partial class FruitAccountingContext : DbContext
                 .HasColumnName("is_weekly");
             entity.Property(e => e.NetAmount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("net_amount");
             entity.Property(e => e.PeriodFrom).HasColumnName("period_from");
             entity.Property(e => e.PeriodTo).HasColumnName("period_to");
             entity.Property(e => e.TotalAmount)
                 .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
                 .HasColumnName("total_amount");
 
             entity.HasOne(d => d.Buyer).WithMany(p => p.SalesBills)
@@ -2248,7 +2293,9 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.PasswordHash)
                 .HasMaxLength(255)
                 .HasColumnName("password_hash");
-            entity.Property(e => e.Role).HasColumnName("role");
+            entity.Property(e => e.Role)
+                .HasDefaultValueSql("'operator'::user_role")
+                .HasColumnName("role");
             entity.Property(e => e.Username)
                 .HasMaxLength(30)
                 .HasColumnName("username");
@@ -2358,7 +2405,9 @@ public partial class FruitAccountingContext : DbContext
                 .HasDefaultValueSql("now()")
                 .HasColumnName("sent_at");
             entity.Property(e => e.SentBy).HasColumnName("sent_by");
-            entity.Property(e => e.Status).HasColumnName("status");
+            entity.Property(e => e.Status)
+                .HasDefaultValueSql("'queued'::dispatch_status")
+                .HasColumnName("status");
             entity.Property(e => e.StatusUpdatedAt).HasColumnName("status_updated_at");
             entity.Property(e => e.WaMessageId)
                 .HasMaxLength(80)

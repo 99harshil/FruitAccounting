@@ -48,6 +48,7 @@ namespace FruitAccounting.UI
             txtName.BackColor = Color.FromArgb(224, 224, 224);
             txtName.BorderStyle = BorderStyle.FixedSingle;
             txtName.Location = new Point(75, 14);
+            txtName.MaxLength = 60;
             txtName.Name = "txtName";
             txtName.Size = new Size(235, 23);
             txtName.TabIndex = 2;

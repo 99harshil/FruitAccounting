@@ -94,6 +94,21 @@ public partial class Account
 
     public long? AmanatPartyId { get; set; }
 
+    // Legacy-migration-prep columns (added directly to the DB ahead of the Phase 9
+    // BGT .mdb import work). Not yet used by any form - present here only so the
+    // EF model and migrations stay an accurate reflection of the live schema.
+    public long? CountryId { get; set; }
+
+    public decimal? LabourPct { get; set; }
+
+    public long? PartyGroupId { get; set; }
+
+    public string? PersonName { get; set; }
+
+    public string? PhoneResidence { get; set; }
+
+    public byte[]? Photo { get; set; }
+
     public DateTime CreatedAt { get; set; }
 
     public DateTime UpdatedAt { get; set; }
@@ -101,6 +116,12 @@ public partial class Account
     public virtual Account? AmanatParty { get; set; }
 
     public virtual ICollection<Account> InverseAmanatParty { get; set; } = new List<Account>();
+
+    public virtual Country? CountryNavigation { get; set; }
+
+    public virtual Account? PartyGroup { get; set; }
+
+    public virtual ICollection<Account> InversePartyGroup { get; set; } = new List<Account>();
 
     public virtual AccountGroup AccountGroup { get; set; } = null!;
 

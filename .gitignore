@@ -9,6 +9,10 @@ obj/
 packages/
 *.nupkg
 
+# migration
+.db-check-output/
+ VerifyDbMigrationsLocal.ps1
+ baseline_migrations_history.sql
 # OS files
 .DS_Store
 Thumbs.db

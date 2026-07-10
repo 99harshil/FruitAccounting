@@ -183,6 +183,7 @@ namespace FruitAccounting.UI
             txtFax.BackColor = Color.FromArgb(224, 224, 224);
             txtFax.BorderStyle = BorderStyle.FixedSingle;
             txtFax.Location = new Point(65, 194);
+            txtFax.MaxLength = 20;
             txtFax.Name = "txtFax";
             txtFax.Size = new Size(140, 23);
             txtFax.TabIndex = 23;
@@ -420,6 +421,7 @@ namespace FruitAccounting.UI
             txtTdsHead.BackColor = Color.FromArgb(224, 224, 224);
             txtTdsHead.BorderStyle = BorderStyle.FixedSingle;
             txtTdsHead.Location = new Point(470, 44);
+            txtTdsHead.MaxLength = 30;
             txtTdsHead.Name = "txtTdsHead";
             txtTdsHead.Size = new Size(150, 23);
             txtTdsHead.TabIndex = 13;
@@ -666,6 +668,7 @@ namespace FruitAccounting.UI
             txtNameInBank.BackColor = Color.FromArgb(224, 224, 224);
             txtNameInBank.BorderStyle = BorderStyle.FixedSingle;
             txtNameInBank.Location = new Point(100, 44);
+            txtNameInBank.MaxLength = 60;
             txtNameInBank.Name = "txtNameInBank";
             txtNameInBank.Size = new Size(220, 23);
             txtNameInBank.TabIndex = 5;
@@ -743,6 +746,7 @@ namespace FruitAccounting.UI
             txtCst.BackColor = Color.FromArgb(224, 224, 224);
             txtCst.BorderStyle = BorderStyle.FixedSingle;
             txtCst.Location = new Point(455, 74);
+            txtCst.MaxLength = 20;
             txtCst.Name = "txtCst";
             txtCst.Size = new Size(130, 23);
             txtCst.TabIndex = 11;
@@ -780,6 +784,7 @@ namespace FruitAccounting.UI
             txtTin.BackColor = Color.FromArgb(224, 224, 224);
             txtTin.BorderStyle = BorderStyle.FixedSingle;
             txtTin.Location = new Point(455, 44);
+            txtTin.MaxLength = 20;
             txtTin.Name = "txtTin";
             txtTin.Size = new Size(130, 23);
             txtTin.TabIndex = 7;
