@@ -54,6 +54,8 @@ internal static class Program
         services.AddScoped<ItemService>();
         services.AddScoped<ItemCountService>();
         services.AddScoped<ReceiptService>();
+        services.AddScoped<PaymentService>();
+        services.AddScoped<TdsPaymentService>();
         using var provider = services.BuildServiceProvider();
 
         long companyId;
@@ -125,6 +127,27 @@ internal static class Program
                                         provider.GetRequiredService<AccountGroupService>(),
                                         provider.GetRequiredService<RegionService>(),
                                         companyId, financialYearId.Value, 'B', null).ShowDialog()));
+            menu.Add(("Cash Payment", () => new PaymentForm(
+                                        provider.GetRequiredService<PaymentService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<DaybookService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        companyId, financialYearId.Value, 'C', null).ShowDialog()));
+            menu.Add(("Bank Payment", () => new PaymentForm(
+                                        provider.GetRequiredService<PaymentService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<DaybookService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        companyId, financialYearId.Value, 'B', null).ShowDialog()));
+            menu.Add(("TDS Payment", () => new TdsPaymentForm(
+                                        provider.GetRequiredService<TdsPaymentService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<DaybookService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        companyId, financialYearId.Value, null).ShowDialog()));
         }
 
         while (true)

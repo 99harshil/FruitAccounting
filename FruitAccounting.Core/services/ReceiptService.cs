@@ -18,14 +18,14 @@ public class ReceiptService
         _contextFactory = contextFactory;
     }
 
-    public async Task<List<Receipt>> GetAllReceiptsAsync(long financialYearId)
+    public async Task<List<Receipt>> GetAllReceiptsAsync(long financialYearId, char bookType)
     {
         using var context = _contextFactory.CreateDbContext();
         return await context.Receipts
             .AsNoTracking()
             .Include(r => r.Account)
             .Include(r => r.Daybook)
-            .Where(r => r.FinancialYearId == financialYearId)
+            .Where(r => r.FinancialYearId == financialYearId && r.Daybook.BookType == bookType)
             .OrderByDescending(r => r.ReceiptNo)
             .ToListAsync();
     }

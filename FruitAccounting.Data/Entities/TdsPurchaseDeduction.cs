@@ -23,9 +23,13 @@ public partial class TdsPurchaseDeduction
 
     public DateTime DeductedAt { get; set; }
 
+    public long? TdsPaymentId { get; set; }
+
     public virtual FinancialYear FinancialYear { get; set; } = null!;
 
     public virtual Payment Payment { get; set; } = null!;
 
     public virtual Account Supplier { get; set; } = null!;
+
+    public virtual TdsPayment? TdsPayment { get; set; }
 }

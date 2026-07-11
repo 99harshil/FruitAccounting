@@ -371,7 +371,14 @@ namespace FruitAccounting.UI
                     newForm = new Form { Text = "Journal Entry", MdiParent = this };
                     break;
                 case "CashPayment":
-                    newForm = new Form { Text = "Cash Payment", MdiParent = this };
+                    var paymentServiceCash = Program.ServiceProvider?.GetService(typeof(PaymentService)) as PaymentService;
+                    var accountServiceForPayCash = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var daybookServiceForPayCash = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    var accountGroupServiceForPayCash = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceForPayCash = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    if (paymentServiceCash != null && accountServiceForPayCash != null && daybookServiceForPayCash != null && accountGroupServiceForPayCash != null && regionServiceForPayCash != null)
+                        newForm = new PaymentForm(paymentServiceCash, accountServiceForPayCash, daybookServiceForPayCash, accountGroupServiceForPayCash, regionServiceForPayCash,
+                            _company.CompanyId, _financialYear.FinancialYearId, 'C', _loggedInUser.UserId);
                     break;
                 case "CashReceipt":
                     var receiptServiceCash = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;
@@ -384,7 +391,24 @@ namespace FruitAccounting.UI
                             _company.CompanyId, _financialYear.FinancialYearId, 'C', _loggedInUser.UserId);
                     break;
                 case "BankPayment":
-                    newForm = new Form { Text = "Bank Payment", MdiParent = this };
+                    var paymentServiceBank = Program.ServiceProvider?.GetService(typeof(PaymentService)) as PaymentService;
+                    var accountServiceForPayBank = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var daybookServiceForPayBank = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    var accountGroupServiceForPayBank = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceForPayBank = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    if (paymentServiceBank != null && accountServiceForPayBank != null && daybookServiceForPayBank != null && accountGroupServiceForPayBank != null && regionServiceForPayBank != null)
+                        newForm = new PaymentForm(paymentServiceBank, accountServiceForPayBank, daybookServiceForPayBank, accountGroupServiceForPayBank, regionServiceForPayBank,
+                            _company.CompanyId, _financialYear.FinancialYearId, 'B', _loggedInUser.UserId);
+                    break;
+                case "TDSPayment":
+                    var tdsPaymentService = Program.ServiceProvider?.GetService(typeof(TdsPaymentService)) as TdsPaymentService;
+                    var accountServiceForTds = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var daybookServiceForTds = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    var accountGroupServiceForTds = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceForTds = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    if (tdsPaymentService != null && accountServiceForTds != null && daybookServiceForTds != null && accountGroupServiceForTds != null && regionServiceForTds != null)
+                        newForm = new TdsPaymentForm(tdsPaymentService, accountServiceForTds, daybookServiceForTds, accountGroupServiceForTds, regionServiceForTds,
+                            _company.CompanyId, _financialYear.FinancialYearId, _loggedInUser.UserId);
                     break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;

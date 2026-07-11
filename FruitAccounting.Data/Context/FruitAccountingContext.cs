@@ -100,6 +100,8 @@ public partial class FruitAccountingContext : DbContext
 
     public virtual DbSet<TdsPurchaseDeduction> TdsPurchaseDeductions { get; set; }
 
+    public virtual DbSet<TdsPayment> TdsPayments { get; set; }
+
     public virtual DbSet<Transporter> Transporters { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
@@ -121,7 +123,7 @@ public partial class FruitAccountingContext : DbContext
             .HasPostgresEnum("payment_mode", new[] { "cash", "bank", "cheque" })
             .HasPostgresEnum("purchase_mode", new[] { "with_commission", "trading", "without_commission" })
             .HasPostgresEnum("user_role", new[] { "admin", "operator", "readonly" })
-            .HasPostgresEnum("voucher_type", new[] { "purchase_bill", "sales_bill", "receipt", "payment", "journal", "bank_entry", "crate", "cold_storage", "desavar_purchase", "desavar_sale", "import_purchase", "import_sale", "opening_balance" });
+            .HasPostgresEnum("voucher_type", new[] { "purchase_bill", "sales_bill", "receipt", "payment", "journal", "bank_entry", "crate", "cold_storage", "desavar_purchase", "desavar_sale", "import_purchase", "import_sale", "opening_balance", "tds_payment" });
 
         modelBuilder.Entity<Account>(entity =>
         {
@@ -2228,6 +2230,7 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.TdsRate)
                 .HasPrecision(6, 3)
                 .HasColumnName("tds_rate");
+            entity.Property(e => e.TdsPaymentId).HasColumnName("tds_payment_id");
 
             entity.HasOne(d => d.FinancialYear).WithMany(p => p.TdsPurchaseDeductions)
                 .HasForeignKey(d => d.FinancialYearId)
@@ -2243,6 +2246,100 @@ public partial class FruitAccountingContext : DbContext
                 .HasForeignKey(d => d.SupplierId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("tds_purchase_deductions_supplier_id_fkey");
+
+            entity.HasOne(d => d.TdsPayment).WithMany(p => p.TdsPurchaseDeductions)
+                .HasForeignKey(d => d.TdsPaymentId)
+                .OnDelete(DeleteBehavior.SetNull)
+                .HasConstraintName("tds_purchase_deductions_tds_payment_id_fkey");
+        });
+
+        modelBuilder.Entity<TdsPayment>(entity =>
+        {
+            entity.HasKey(e => e.TdsPaymentId).HasName("tds_payments_pkey");
+
+            entity.ToTable("tds_payments");
+
+            entity.HasIndex(e => new { e.FinancialYearId, e.TdsPaymentNo }, "tds_payments_financial_year_id_tds_payment_no_key").IsUnique();
+
+            entity.Property(e => e.TdsPaymentId)
+                .UseIdentityAlwaysColumn()
+                .HasColumnName("tds_payment_id");
+            entity.Property(e => e.FinancialYearId).HasColumnName("financial_year_id");
+            entity.Property(e => e.TdsPaymentNo).HasColumnName("tds_payment_no");
+            entity.Property(e => e.PaymentDate).HasColumnName("payment_date");
+            entity.Property(e => e.TdsAccountId).HasColumnName("tds_account_id");
+            entity.Property(e => e.DaybookId).HasColumnName("daybook_id");
+            entity.Property(e => e.BsrCode)
+                .HasMaxLength(7)
+                .HasColumnName("bsr_code");
+            entity.Property(e => e.ChallanSerialNo)
+                .HasMaxLength(10)
+                .HasColumnName("challan_serial_no");
+            entity.Property(e => e.InterestRatePct)
+                .HasPrecision(6, 3)
+                .HasDefaultValueSql("0")
+                .HasColumnName("interest_rate_pct");
+            entity.Property(e => e.TaxAmount)
+                .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("tax_amount");
+            entity.Property(e => e.InterestAmount)
+                .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("interest_amount");
+            entity.Property(e => e.FeesAmount)
+                .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("fees_amount");
+            entity.Property(e => e.PenaltyAmount)
+                .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("penalty_amount");
+            entity.Property(e => e.InterestAccountId).HasColumnName("interest_account_id");
+            entity.Property(e => e.FeesAccountId).HasColumnName("fees_account_id");
+            entity.Property(e => e.PenaltyAccountId).HasColumnName("penalty_account_id");
+            entity.Property(e => e.TotalAmount)
+                .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("total_amount");
+            entity.Property(e => e.Remarks)
+                .HasMaxLength(200)
+                .HasColumnName("remarks");
+            entity.Property(e => e.CreatedBy).HasColumnName("created_by");
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("now()")
+                .HasColumnName("created_at");
+
+            entity.HasOne(d => d.FinancialYear).WithMany()
+                .HasForeignKey(d => d.FinancialYearId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("tds_payments_financial_year_id_fkey");
+
+            entity.HasOne(d => d.TdsAccount).WithMany()
+                .HasForeignKey(d => d.TdsAccountId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("tds_payments_tds_account_id_fkey");
+
+            entity.HasOne(d => d.Daybook).WithMany()
+                .HasForeignKey(d => d.DaybookId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("tds_payments_daybook_id_fkey");
+
+            entity.HasOne(d => d.InterestAccount).WithMany()
+                .HasForeignKey(d => d.InterestAccountId)
+                .HasConstraintName("tds_payments_interest_account_id_fkey");
+
+            entity.HasOne(d => d.FeesAccount).WithMany()
+                .HasForeignKey(d => d.FeesAccountId)
+                .HasConstraintName("tds_payments_fees_account_id_fkey");
+
+            entity.HasOne(d => d.PenaltyAccount).WithMany()
+                .HasForeignKey(d => d.PenaltyAccountId)
+                .HasConstraintName("tds_payments_penalty_account_id_fkey");
+
+            entity.HasOne(d => d.CreatedByNavigation).WithMany()
+                .HasForeignKey(d => d.CreatedBy)
+                .HasConstraintName("tds_payments_created_by_fkey");
         });
 
         modelBuilder.Entity<Transporter>(entity =>

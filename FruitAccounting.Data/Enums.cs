@@ -6,7 +6,7 @@ public enum VoucherType
 {
     PurchaseBill, SalesBill, Receipt, Payment, Journal, BankEntry,
     Crate, ColdStorage, DesavarPurchase, DesavarSale,
-    ImportPurchase, ImportSale, OpeningBalance
+    ImportPurchase, ImportSale, OpeningBalance, TdsPayment
 }
 
 public enum PaymentMode { Cash, Bank, Cheque }

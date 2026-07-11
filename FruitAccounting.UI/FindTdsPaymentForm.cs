@@ -7,31 +7,27 @@ using FruitAccounting.Data.Entities;
 
 namespace FruitAccounting.UI
 {
-    public partial class FindReceiptForm : BaseSearchForm<Receipt>
+    public partial class FindTdsPaymentForm : BaseSearchForm<TdsPayment>
     {
-        private readonly ReceiptService _receiptService;
+        private readonly TdsPaymentService _tdsPaymentService;
         private readonly long _financialYearId;
-        private readonly char _bookType;
 
-        public FindReceiptForm(ReceiptService receiptService, long financialYearId, char bookType)
+        public FindTdsPaymentForm(TdsPaymentService tdsPaymentService, long financialYearId)
         {
             InitializeComponent();
-            _receiptService = receiptService;
+            _tdsPaymentService = tdsPaymentService;
             _financialYearId = financialYearId;
-            _bookType = bookType;
 
-            // Initialize base class fields from Designer-created controls
             base.txtSearch = this.txtSearch;
             base.chkMatchCase = this.chkMatchCase;
             base.btnFind = this.btnFind;
             base.btnSelect = this.btnSelect;
             base.btnCancel = this.btnCancel;
 
-            // Wire up DataGridView reference
             dgvData = this.dgvGroups;
         }
 
-        private async void FindReceiptForm_Load(object sender, EventArgs e)
+        private async void FindTdsPaymentForm_Load(object sender, EventArgs e)
         {
             await LoadAllDataAsync();
         }
@@ -40,68 +36,60 @@ namespace FruitAccounting.UI
         {
             try
             {
-                _allData = await _receiptService.GetAllReceiptsAsync(_financialYearId, _bookType);
+                _allData = await _tdsPaymentService.GetAllTdsPaymentsAsync(_financialYearId);
                 DisplayData(_allData);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading Receipts: {ex.Message}", "Error");
+                MessageBox.Show($"Error loading TDS Payments: {ex.Message}", "Error");
             }
         }
 
-        protected override void DisplayData(List<Receipt> data)
+        protected override void DisplayData(List<TdsPayment> data)
         {
             dgvGroups.Rows.Clear();
-            foreach (var r in data)
+            foreach (var t in data)
             {
                 dgvGroups.Rows.Add(
-                    r.ReceiptNo,
-                    r.ReceiptDate.ToString("dd/MM/yyyy"),
-                    r.Account?.Code,
-                    r.Account?.Name,
-                    r.Daybook?.Name,
-                    r.ChequeNo,
-                    r.BankName,
-                    r.TotalSettled.ToString("N2"),
-                    r.ReceiptId);
+                    t.TdsPaymentNo,
+                    t.PaymentDate.ToString("dd/MM/yyyy"),
+                    t.BsrCode,
+                    t.ChallanSerialNo,
+                    t.TotalAmount.ToString("N2"),
+                    t.TdsPaymentId);
             }
 
-            // Set header colors
             dgvGroups.EnableHeadersVisualStyles = false;
             dgvGroups.Columns[0].HeaderCell.Style.BackColor = Color.LimeGreen;
             dgvGroups.Columns[1].HeaderCell.Style.BackColor = Color.Cyan;
             dgvGroups.Columns[2].HeaderCell.Style.BackColor = Color.Cyan;
             dgvGroups.Columns[3].HeaderCell.Style.BackColor = Color.LimeGreen;
-            dgvGroups.Columns[4].HeaderCell.Style.BackColor = Color.Cyan;
-            dgvGroups.Columns[8].Visible = false; // Hide ID column
+            dgvGroups.Columns[5].Visible = false; // Hide ID column
         }
 
-        protected override List<Receipt> ApplySearchFilter(string searchPattern, bool matchCase)
+        protected override List<TdsPayment> ApplySearchFilter(string searchPattern, bool matchCase)
         {
             RegexOptions options = matchCase ? RegexOptions.None : RegexOptions.IgnoreCase;
             var regex = new Regex(searchPattern, options);
 
-            return _allData.Where(r =>
-                regex.IsMatch(r.ReceiptNo.ToString()) ||
-                regex.IsMatch(r.Account?.Code ?? "") ||
-                regex.IsMatch(r.Account?.Name ?? "") ||
-                regex.IsMatch(r.Daybook?.Name ?? "") ||
-                regex.IsMatch(r.ChequeNo ?? "") ||
-                regex.IsMatch(r.BankName ?? "")
+            return _allData.Where(t =>
+                regex.IsMatch(t.TdsPaymentNo.ToString()) ||
+                regex.IsMatch(t.BsrCode ?? "") ||
+                regex.IsMatch(t.ChallanSerialNo ?? "")
             ).ToList();
         }
 
-        protected override Receipt? GetSelectedItemFromGrid()
+        protected override TdsPayment? GetSelectedItemFromGrid()
         {
             if (dgvGroups.SelectedRows.Count <= 0)
                 return null;
 
             var row = dgvGroups.SelectedRows[0];
-            var receiptId = Convert.ToInt64(row.Cells[8].Value);
-            return _allData.FirstOrDefault(r => r.ReceiptId == receiptId);
+            var tdsPaymentId = Convert.ToInt64(row.Cells[5].Value);
+            return _allData.FirstOrDefault(t => t.TdsPaymentId == tdsPaymentId);
         }
 
-        public Receipt? SelectedReceipt => SelectedItem;
+        public TdsPayment? SelectedTdsPayment => SelectedItem;
 
         private void txtSearch_TextChanged(object sender, EventArgs e) => PerformSearch();
 
@@ -119,7 +107,6 @@ namespace FruitAccounting.UI
 
         private void dgvGroups_KeyDown(object sender, KeyEventArgs e)
         {
-            // Enter on the grid selects the highlighted row (grid normally swallows Enter to move down a row)
             if (e.KeyCode == Keys.Enter)
             {
                 e.Handled = true;

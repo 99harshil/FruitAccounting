@@ -1,6 +1,5 @@
 using System;
 using System.Globalization;
-using System.Text;
 using System.Windows.Forms;
 using FruitAccounting.Core.services;
 using FruitAccounting.Data.Entities;
@@ -8,28 +7,28 @@ using FruitAccounting.Data.Enums;
 
 namespace FruitAccounting.UI
 {
-    public partial class ReceiptForm : BaseVoucherForm<Receipt>
+    public partial class PaymentForm : BaseVoucherForm<Payment>
     {
-        private readonly ReceiptService _receiptService;
+        private readonly PaymentService _paymentService;
         private readonly AccountService _accountService;
         private readonly DaybookService _daybookService;
         private readonly AccountGroupService _accountGroupService;
         private readonly RegionService _regionService;
         private readonly long _companyId;
         private readonly long _financialYearId;
-        private readonly char _bookTypeMode; // 'C' = Cash Receipt, 'B' = Bank Receipt
+        private readonly char _bookTypeMode; // 'C' = Cash Payment, 'B' = Bank Payment
         private readonly long? _currentUserId;
 
         private List<Account> _accounts = new();
         private List<Daybook> _daybooks = new();
-        private long _nextReceiptNo = 1;
+        private long _nextPaymentNo = 1;
 
-        public ReceiptForm(ReceiptService receiptService, AccountService accountService, DaybookService daybookService,
+        public PaymentForm(PaymentService paymentService, AccountService accountService, DaybookService daybookService,
             AccountGroupService accountGroupService, RegionService regionService,
             long companyId, long financialYearId, char bookTypeMode, long? currentUserId)
         {
             InitializeComponent();
-            _receiptService = receiptService;
+            _paymentService = paymentService;
             _accountService = accountService;
             _daybookService = daybookService;
             _accountGroupService = accountGroupService;
@@ -39,9 +38,9 @@ namespace FruitAccounting.UI
             _bookTypeMode = bookTypeMode;
             _currentUserId = currentUserId;
 
-            Text = bookTypeMode == 'B' ? "Bank Receipt" : "Cash Receipt";
+            Text = bookTypeMode == 'B' ? "Bank Payment" : "Cash Payment";
 
-            // Cheque/Bank/Branch/Return only apply to Bank Receipts
+            // Cheque/Bank/Branch/Return only apply to Bank Payments
             bool isBank = bookTypeMode == 'B';
             lblChequeNo.Visible = isBank;
             txtChequeNo.Visible = isBank;
@@ -68,7 +67,7 @@ namespace FruitAccounting.UI
             ToggleEditMode(false);
         }
 
-        private async void ReceiptForm_Load(object sender, EventArgs e)
+        private async void PaymentForm_Load(object sender, EventArgs e)
         {
             await LoadDataAsync();
         }
@@ -80,8 +79,8 @@ namespace FruitAccounting.UI
                 await RefreshAccountsAsync();
                 await RefreshDaybooksAsync();
 
-                _dataList = await _receiptService.GetAllReceiptsAsync(_financialYearId, _bookTypeMode);
-                _nextReceiptNo = await _receiptService.GetNextReceiptNoAsync(_financialYearId);
+                _dataList = await _paymentService.GetAllPaymentsAsync(_financialYearId, _bookTypeMode);
+                _nextPaymentNo = await _paymentService.GetNextPaymentNoAsync(_financialYearId);
                 if (_dataList.Count > 0)
                 {
                     _currentIndex = 0;
@@ -94,7 +93,7 @@ namespace FruitAccounting.UI
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error loading Receipts: {ex.Message}", "Error");
+                MessageBox.Show($"Error loading Payments: {ex.Message}", "Error");
             }
         }
 
@@ -127,31 +126,31 @@ namespace FruitAccounting.UI
             if (_currentIndex < 0 || _currentIndex >= _dataList.Count)
                 return;
 
-            var r = _dataList[_currentIndex];
+            var p = _dataList[_currentIndex];
 
-            txtReceiptNo.Text = r.ReceiptNo.ToString();
-            dtpReceiptDate.Value = r.ReceiptDate.ToDateTime(TimeOnly.MinValue);
-            txtTime.Text = r.CreatedAt.ToLocalTime().ToString("HH:mm");
+            txtPaymentNo.Text = p.PaymentNo.ToString();
+            dtpPaymentDate.Value = p.PaymentDate.ToDateTime(TimeOnly.MinValue);
+            txtTime.Text = p.CreatedAt.ToLocalTime().ToString("HH:mm");
 
-            int daybookIndex = _daybooks.FindIndex(d => d.DaybookId == r.DaybookId);
+            int daybookIndex = _daybooks.FindIndex(d => d.DaybookId == p.DaybookId);
             cmbDaybook.SelectedIndex = daybookIndex;
 
-            int accountIndex = _accounts.FindIndex(a => a.AccountId == r.AccountId);
+            int accountIndex = _accounts.FindIndex(a => a.AccountId == p.AccountId);
             cmbAccount.SelectedIndex = accountIndex;
 
-            txtRecAmount.Text = r.TotalSettled.ToString(CultureInfo.InvariantCulture);
-            txtVatav.Text = r.Vatav.ToString(CultureInfo.InvariantCulture);
-            txtTds.Text = r.TdsAmount.ToString(CultureInfo.InvariantCulture);
-            txtDifference.Text = r.RoundingDiff.ToString(CultureInfo.InvariantCulture);
-            txtChequeNo.Text = r.ChequeNo ?? "";
-            txtBankName.Text = r.BankName ?? "";
-            txtBranch.Text = r.BankBranch ?? "";
-            txtRemarks.Text = r.Remarks ?? "";
+            // txtPaidAmount holds the net amount actually paid; the gross Amount is redisplayed via Total Amount.
+            txtPaidAmount.Text = p.TotalSettled.ToString(CultureInfo.InvariantCulture);
+            txtVatav.Text = p.Vatav.ToString(CultureInfo.InvariantCulture);
+            txtHamali.Text = p.Hamali.ToString(CultureInfo.InvariantCulture);
+            txtChequeNo.Text = p.ChequeNo ?? "";
+            txtBankName.Text = p.BankName ?? "";
+            txtBranch.Text = p.BankBranch ?? "";
+            txtRemarks.Text = p.Remarks ?? "";
 
-            chkReturn.Checked = r.IsReturned;
-            dtpReturnDate.Checked = r.ReturnedDate.HasValue;
-            if (r.ReturnedDate.HasValue)
-                dtpReturnDate.Value = r.ReturnedDate.Value.ToDateTime(TimeOnly.MinValue);
+            chkReturn.Checked = p.IsReturned;
+            dtpReturnDate.Checked = p.ReturnedDate.HasValue;
+            if (p.ReturnedDate.HasValue)
+                dtpReturnDate.Value = p.ReturnedDate.Value.ToDateTime(TimeOnly.MinValue);
 
             UpdateComputedFields();
             UpdateNavigationButtons();
@@ -159,16 +158,15 @@ namespace FruitAccounting.UI
 
         protected override void ClearForm()
         {
-            txtReceiptNo.Text = _nextReceiptNo.ToString();
-            dtpReceiptDate.Value = DateTime.Today;
+            txtPaymentNo.Text = _nextPaymentNo.ToString();
+            dtpPaymentDate.Value = DateTime.Today;
             txtTime.Text = DateTime.Now.ToString("HH:mm");
 
             cmbDaybook.SelectedIndex = -1;
             cmbAccount.SelectedIndex = -1;
-            txtRecAmount.Text = "0";
+            txtPaidAmount.Text = "0";
             txtVatav.Text = "0";
-            txtTds.Text = "0";
-            txtDifference.Text = "0";
+            txtHamali.Text = "0";
             txtChequeNo.Clear();
             txtBankName.Clear();
             txtBranch.Clear();
@@ -196,13 +194,13 @@ namespace FruitAccounting.UI
                 return false;
             }
 
-            if (!decimal.TryParse(txtRecAmount.Text, out var amount) || amount <= 0)
+            if (!decimal.TryParse(txtPaidAmount.Text, out var amount) || amount <= 0)
             {
-                MessageBox.Show("Rec. Amount must be a valid number greater than zero", "Validation Error");
+                MessageBox.Show("Paid Amount must be a valid number greater than zero", "Validation Error");
                 return false;
             }
 
-            (string label, TextBox box)[] numericFields = { ("Vatav", txtVatav), ("TDS", txtTds), ("Difference", txtDifference) };
+            (string label, TextBox box)[] numericFields = { ("Vatav", txtVatav), ("Hamali", txtHamali) };
             foreach (var (label, box) in numericFields)
             {
                 if (!decimal.TryParse(box.Text, out _))
@@ -215,7 +213,7 @@ namespace FruitAccounting.UI
             var daybook = _daybooks[cmbDaybook.SelectedIndex];
             if (daybook.LinkedAccountId == null)
             {
-                MessageBox.Show($"Daybook '{daybook.Name}' has no Linked Account set. Set one in the Daybook master before using it for a Receipt.", "Validation Error");
+                MessageBox.Show($"Daybook '{daybook.Name}' has no Linked Account set. Set one in the Daybook master before using it for a Payment.", "Validation Error");
                 return false;
             }
 
@@ -224,22 +222,20 @@ namespace FruitAccounting.UI
 
         protected override async Task<bool> SaveRecordAsync()
         {
-            // txtRecAmount is the net amount actually paid/received; ReceiptService.Amount is the
-            // gross bill amount credited to the party, so Vatav/TDS/Difference are added back on.
-            var netAmount = decimal.Parse(txtRecAmount.Text);
+            // txtPaidAmount is the net amount actually paid out; PaymentService.Amount is the
+            // gross bill amount debited to the party, so Vatav/Hamali are added back on.
+            var netAmount = decimal.Parse(txtPaidAmount.Text);
             var vatav = decimal.Parse(txtVatav.Text);
-            var tds = decimal.Parse(txtTds.Text);
-            var diff = decimal.Parse(txtDifference.Text);
+            var hamali = decimal.Parse(txtHamali.Text);
 
-            var input = new ReceiptService.ReceiptInput
+            var input = new PaymentService.PaymentInput
             {
                 AccountId = _accounts[cmbAccount.SelectedIndex].AccountId,
                 DaybookId = _daybooks[cmbDaybook.SelectedIndex].DaybookId,
-                ReceiptDate = DateOnly.FromDateTime(dtpReceiptDate.Value),
-                Amount = netAmount + vatav + tds + diff,
+                PaymentDate = DateOnly.FromDateTime(dtpPaymentDate.Value),
+                Amount = netAmount + vatav + hamali,
                 Vatav = vatav,
-                TdsAmount = tds,
-                RoundingDiff = diff,
+                Hamali = hamali,
                 Mode = _bookTypeMode == 'B' ? PaymentMode.Bank : PaymentMode.Cash,
                 ChequeNo = string.IsNullOrWhiteSpace(txtChequeNo.Text) ? null : txtChequeNo.Text.Trim(),
                 BankName = string.IsNullOrWhiteSpace(txtBankName.Text) ? null : txtBankName.Text.Trim(),
@@ -253,14 +249,14 @@ namespace FruitAccounting.UI
 
             if (_isAddMode)
             {
-                var (success, message) = await _receiptService.CreateReceiptAsync(input);
+                var (success, message) = await _paymentService.CreatePaymentAsync(input);
                 MessageBox.Show(message, success ? "Success" : "Error");
                 return success;
             }
             else
             {
-                var receipt = _dataList[_currentIndex];
-                var (success, message) = await _receiptService.UpdateReceiptAsync(receipt.ReceiptId, input);
+                var payment = _dataList[_currentIndex];
+                var (success, message) = await _paymentService.UpdatePaymentAsync(payment.PaymentId, input);
                 MessageBox.Show(message, success ? "Success" : "Error");
                 return success;
             }
@@ -268,8 +264,8 @@ namespace FruitAccounting.UI
 
         protected override async Task<bool> DeleteRecordAsync()
         {
-            var receipt = _dataList[_currentIndex];
-            var (success, message) = await _receiptService.DeleteReceiptAsync(receipt.ReceiptId);
+            var payment = _dataList[_currentIndex];
+            var (success, message) = await _paymentService.DeletePaymentAsync(payment.PaymentId);
             MessageBox.Show(message, success ? "Success" : "Error");
             return success;
         }
@@ -280,8 +276,8 @@ namespace FruitAccounting.UI
 
             Control[] controls =
             {
-                dtpReceiptDate, cmbDaybook, btnNewDaybook, cmbAccount, btnNewAccount,
-                txtRecAmount, txtVatav, txtTds, txtDifference,
+                dtpPaymentDate, cmbDaybook, btnNewDaybook, cmbAccount, btnNewAccount,
+                txtPaidAmount, txtVatav, txtHamali,
                 txtChequeNo, txtBankName, txtBranch, txtRemarks, chkReturn, dtpReturnDate
             };
 
@@ -289,30 +285,24 @@ namespace FruitAccounting.UI
                 control.Enabled = isEditing;
         }
 
-        // txtRecAmount holds the net amount actually paid/received; Vatav/TDS/Difference are
+        // txtPaidAmount holds the net amount actually paid; Vatav/Hamali are
         // added on top to arrive at the gross bill total.
         private void UpdateComputedFields()
         {
-            decimal.TryParse(txtRecAmount.Text, out var amount);
+            decimal.TryParse(txtPaidAmount.Text, out var amount);
             decimal.TryParse(txtVatav.Text, out var vatav);
-            decimal.TryParse(txtTds.Text, out var tds);
-            decimal.TryParse(txtDifference.Text, out var diff);
+            decimal.TryParse(txtHamali.Text, out var hamali);
 
-            var total = amount + vatav + tds + diff;
-            txtTotalAmount.Text = total.ToString("N2", CultureInfo.InvariantCulture);
-            lblAmountWords.Text = AmountInWords.Convert(total) + " Only.";
+            var grossTotal = amount + vatav + hamali;
+            txtTotalAmount.Text = grossTotal.ToString("N2", CultureInfo.InvariantCulture);
+            lblAmountWords.Text = AmountInWords.Convert(grossTotal) + " Only.";
         }
 
         private void AmountField_Changed(object sender, EventArgs e) => UpdateComputedFields();
 
-        private void cmbDaybook_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            // Placeholder for a future live-balance display next to the Daybook picker
-        }
-
         private async void btnAdd_Click(object sender, EventArgs e)
         {
-            _nextReceiptNo = await _receiptService.GetNextReceiptNoAsync(_financialYearId);
+            _nextPaymentNo = await _paymentService.GetNextPaymentNoAsync(_financialYearId);
             OnAdd();
             cmbDaybook.Focus();
         }
@@ -347,13 +337,13 @@ namespace FruitAccounting.UI
 
         private async void btnFind_Click(object sender, EventArgs e)
         {
-            using var findForm = new FindReceiptForm(_receiptService, _financialYearId, _bookTypeMode);
+            using var findForm = new FindPaymentForm(_paymentService, _financialYearId, _bookTypeMode);
             if (findForm.ShowDialog() == DialogResult.OK)
             {
-                var selected = findForm.SelectedReceipt;
+                var selected = findForm.SelectedPayment;
                 if (selected != null)
                 {
-                    _currentIndex = _dataList.FindIndex(r => r.ReceiptId == selected.ReceiptId);
+                    _currentIndex = _dataList.FindIndex(p => p.PaymentId == selected.PaymentId);
                     if (_currentIndex >= 0)
                     {
                         DisplayCurrentRecord();
@@ -367,69 +357,5 @@ namespace FruitAccounting.UI
         private void btnPrint_Click(object sender, EventArgs e) => OnPrint();
 
         private void btnWhatsapp_Click(object sender, EventArgs e) => OnWhatsapp();
-    }
-
-    internal static class AmountInWords
-    {
-        private static readonly string[] Ones =
-        {
-            "Zero", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten",
-            "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen", "Seventeen", "Eighteen", "Nineteen"
-        };
-        private static readonly string[] Tens =
-        {
-            "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety"
-        };
-
-        public static string Convert(decimal amount)
-        {
-            bool negative = amount < 0;
-            amount = Math.Abs(amount);
-            long rupees = (long)Math.Floor(amount);
-            int paise = (int)Math.Round((amount - rupees) * 100);
-
-            var sb = new StringBuilder("Rupees ");
-            if (negative) sb.Append("Minus ");
-            sb.Append(rupees == 0 ? "Zero" : ConvertIndianGroups(rupees));
-            if (paise > 0)
-            {
-                sb.Append(" and ");
-                sb.Append(ConvertBelowThousand(paise));
-                sb.Append(" Paise");
-            }
-            return sb.ToString();
-        }
-
-        private static string ConvertIndianGroups(long number)
-        {
-            var parts = new List<string>();
-
-            long crore = number / 10000000;
-            number %= 10000000;
-            long lakh = number / 100000;
-            number %= 100000;
-            long thousand = number / 1000;
-            number %= 1000;
-            long remainder = number;
-
-            if (crore > 0) parts.Add($"{ConvertBelowThousand((int)crore)} Crore");
-            if (lakh > 0) parts.Add($"{ConvertBelowThousand((int)lakh)} Lakh");
-            if (thousand > 0) parts.Add($"{ConvertBelowThousand((int)thousand)} Thousand");
-            if (remainder > 0) parts.Add(ConvertBelowThousand((int)remainder));
-
-            return string.Join(" ", parts);
-        }
-
-        private static string ConvertBelowThousand(int number)
-        {
-            if (number == 0) return "";
-            if (number < 20) return Ones[number];
-            if (number < 100)
-                return Tens[number / 10] + (number % 10 != 0 ? " " + Ones[number % 10] : "");
-
-            int hundreds = number / 100;
-            int rest = number % 100;
-            return Ones[hundreds] + " Hundred" + (rest != 0 ? " " + ConvertBelowThousand(rest) : "");
-        }
     }
 }
