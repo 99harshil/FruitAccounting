@@ -1896,7 +1896,10 @@ public partial class FruitAccountingContext : DbContext
                 .HasPrecision(14, 2)
                 .HasDefaultValueSql("0")
                 .HasColumnName("vatav");
-
+            entity.Property(e => e.TdsAmount)
+                .HasPrecision(14, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("tds_amount");
             entity.HasOne(d => d.Account).WithMany(p => p.Receipts)
                 .HasForeignKey(d => d.AccountId)
                 .OnDelete(DeleteBehavior.ClientSetNull)

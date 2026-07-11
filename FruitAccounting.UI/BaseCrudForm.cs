@@ -201,6 +201,41 @@ namespace FruitAccounting.UI
     }
 
     /// <summary>
+    /// Base class for voucher/transaction forms (Receipt, Payment, Sales, Purchase, ...) that
+    /// need Print and WhatsApp in addition to the standard CRUD button set. Master forms
+    /// (Account, Item, ...) have no use for these and stay on BaseCrudForm directly.
+    /// </summary>
+    [DesignerCategory("")]
+    public abstract class BaseVoucherForm<T> : BaseCrudForm<T> where T : class
+    {
+        protected Button? btnPrint;
+        protected Button? btnWhatsapp;
+
+        protected override void ToggleEditMode(bool isEditing)
+        {
+            base.ToggleEditMode(isEditing);
+            if (btnPrint != null) btnPrint.Enabled = !isEditing && _currentIndex >= 0;
+            if (btnWhatsapp != null) btnWhatsapp.Enabled = !isEditing && _currentIndex >= 0;
+        }
+
+        /// <summary>
+        /// Print button click handler. Override once a report engine is wired up.
+        /// </summary>
+        protected virtual void OnPrint()
+        {
+            MessageBox.Show("Printing is not implemented yet.", "Print", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+
+        /// <summary>
+        /// WhatsApp button click handler. Override once a report engine is wired up.
+        /// </summary>
+        protected virtual void OnWhatsapp()
+        {
+            MessageBox.Show("Sending via WhatsApp is not implemented yet.", "WhatsApp", MessageBoxButtons.OK, MessageBoxIcon.Information);
+        }
+    }
+
+    /// <summary>
     /// Base class for search/find forms with regex support
     /// </summary>
     [DesignerCategory("")]

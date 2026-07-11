@@ -32,6 +32,8 @@ public partial class Receipt
 
     public decimal Vatav { get; set; }
 
+    public decimal TdsAmount { get; set; }
+
     public decimal RoundingDiff { get; set; }
 
     public decimal TotalSettled { get; set; }

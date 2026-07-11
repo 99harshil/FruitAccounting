@@ -53,9 +53,11 @@ internal static class Program
         services.AddScoped<ItemCategoryService>();
         services.AddScoped<ItemService>();
         services.AddScoped<ItemCountService>();
+        services.AddScoped<ReceiptService>();
         using var provider = services.BuildServiceProvider();
 
         long companyId;
+        long? financialYearId;
         using (var context = provider.GetRequiredService<IDbContextFactory<FruitAccountingContext>>().CreateDbContext())
         {
             var company = context.Companies.AsNoTracking().OrderBy(c => c.CompanyId).FirstOrDefault();
@@ -66,9 +68,18 @@ internal static class Program
             }
             companyId = company.CompanyId;
             Console.WriteLine($"Using company: {company.Name} (Id={companyId})\n");
+
+            financialYearId = context.FinancialYears.AsNoTracking()
+                .Where(fy => fy.CompanyId == companyId)
+                .OrderByDescending(fy => fy.IsActive)
+                .ThenByDescending(fy => fy.FinancialYearId)
+                .Select(fy => (long?)fy.FinancialYearId)
+                .FirstOrDefault();
+            if (financialYearId == null)
+                Console.WriteLine("No financial year found for this company - Receipt forms will be unavailable.\n");
         }
 
-        var menu = new (string Label, Action Open)[]
+        var menu = new List<(string Label, Action Open)>
         {
             ("Main Group",     () => new MainGroupForm(provider.GetRequiredService<AccountGroupService>(), companyId).ShowDialog()),
             ("Sub Group",      () => new SubGroupForm(provider.GetRequiredService<AccountGroupService>(), companyId).ShowDialog()),
@@ -77,7 +88,12 @@ internal static class Program
                                         provider.GetRequiredService<AccountGroupService>(),
                                         provider.GetRequiredService<RegionService>(),
                                         companyId).ShowDialog()),
-            ("Daybook",        () => new DaybookForm(provider.GetRequiredService<DaybookService>(), companyId).ShowDialog()),
+            ("Daybook",        () => new DaybookForm(
+                                        provider.GetRequiredService<DaybookService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        companyId).ShowDialog()),
             ("Region",         () => new RegionForm(provider.GetRequiredService<RegionService>(), companyId).ShowDialog()),
             ("Country",        () => new CountryForm(provider.GetRequiredService<CountryService>(), companyId).ShowDialog()),
             ("Item Group",     () => new ItemGroupForm(provider.GetRequiredService<ItemGroupService>(), companyId).ShowDialog()),
@@ -93,10 +109,28 @@ internal static class Program
                                         companyId).ShowDialog()),
         };
 
+        if (financialYearId.HasValue)
+        {
+            menu.Add(("Cash Receipt", () => new ReceiptForm(
+                                        provider.GetRequiredService<ReceiptService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<DaybookService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        companyId, financialYearId.Value, 'C', null).ShowDialog()));
+            menu.Add(("Bank Receipt", () => new ReceiptForm(
+                                        provider.GetRequiredService<ReceiptService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<DaybookService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        companyId, financialYearId.Value, 'B', null).ShowDialog()));
+        }
+
         while (true)
         {
             Console.WriteLine("Which form do you want to open?");
-            for (int i = 0; i < menu.Length; i++)
+            for (int i = 0; i < menu.Count; i++)
                 Console.WriteLine($"  {i + 1}. {menu[i].Label}");
             Console.WriteLine("  0. Exit");
             Console.Write("> ");
@@ -105,7 +139,7 @@ internal static class Program
             if (input == "0" || string.IsNullOrWhiteSpace(input))
                 break;
 
-            if (int.TryParse(input, out int choice) && choice >= 1 && choice <= menu.Length)
+            if (int.TryParse(input, out int choice) && choice >= 1 && choice <= menu.Count)
             {
                 try
                 {

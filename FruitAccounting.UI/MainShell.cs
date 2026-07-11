@@ -340,8 +340,11 @@ namespace FruitAccounting.UI
                     break;
                 case "Daybook":
                     var daybookService = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
-                    if (daybookService != null)
-                        newForm = new DaybookForm(daybookService, _company.CompanyId);
+                    var accountServiceForDaybook = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var accountGroupServiceForDaybook = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceForDaybook = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    if (daybookService != null && accountServiceForDaybook != null && accountGroupServiceForDaybook != null && regionServiceForDaybook != null)
+                        newForm = new DaybookForm(daybookService, accountServiceForDaybook, accountGroupServiceForDaybook, regionServiceForDaybook, _company.CompanyId);
                     break;
                 case "Region":
                     var regionService = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
@@ -371,13 +374,27 @@ namespace FruitAccounting.UI
                     newForm = new Form { Text = "Cash Payment", MdiParent = this };
                     break;
                 case "CashReceipt":
-                    newForm = new Form { Text = "Cash Receipt", MdiParent = this };
+                    var receiptServiceCash = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;
+                    var accountServiceCash = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var daybookServiceCash = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    var accountGroupServiceCash = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceCash = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    if (receiptServiceCash != null && accountServiceCash != null && daybookServiceCash != null && accountGroupServiceCash != null && regionServiceCash != null)
+                        newForm = new ReceiptForm(receiptServiceCash, accountServiceCash, daybookServiceCash, accountGroupServiceCash, regionServiceCash,
+                            _company.CompanyId, _financialYear.FinancialYearId, 'C', _loggedInUser.UserId);
                     break;
                 case "BankPayment":
                     newForm = new Form { Text = "Bank Payment", MdiParent = this };
                     break;
                 case "BankReceipt":
-                    newForm = new Form { Text = "Bank Receipt", MdiParent = this };
+                    var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;
+                    var accountServiceBank = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var daybookServiceBank = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    var accountGroupServiceBank = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceBank = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    if (receiptServiceBank != null && accountServiceBank != null && daybookServiceBank != null && accountGroupServiceBank != null && regionServiceBank != null)
+                        newForm = new ReceiptForm(receiptServiceBank, accountServiceBank, daybookServiceBank, accountGroupServiceBank, regionServiceBank,
+                            _company.CompanyId, _financialYear.FinancialYearId, 'B', _loggedInUser.UserId);
                     break;
                 default:
                     newForm = new Form { Text = formKey, MdiParent = this };

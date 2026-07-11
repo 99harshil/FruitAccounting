@@ -19,6 +19,7 @@ namespace FruitAccounting.UI
         {
             panelInput = new Panel();
             cmbAccount = new ComboBox();
+            btnNewAccount = new Button();
             lblAccount = new Label();
             cmbGroup = new ComboBox();
             lblGroup = new Label();
@@ -41,6 +42,7 @@ namespace FruitAccounting.UI
             //
             panelInput.BorderStyle = BorderStyle.FixedSingle;
             panelInput.Controls.Add(cmbAccount);
+            panelInput.Controls.Add(btnNewAccount);
             panelInput.Controls.Add(lblAccount);
             panelInput.Controls.Add(cmbGroup);
             panelInput.Controls.Add(lblGroup);
@@ -48,7 +50,7 @@ namespace FruitAccounting.UI
             panelInput.Controls.Add(lblName);
             panelInput.Location = new Point(12, 12);
             panelInput.Name = "panelInput";
-            panelInput.Size = new Size(330, 110);
+            panelInput.Size = new Size(350, 110);
             panelInput.TabIndex = 0;
             //
             // cmbAccount
@@ -59,8 +61,20 @@ namespace FruitAccounting.UI
             cmbAccount.FormattingEnabled = true;
             cmbAccount.Location = new Point(75, 74);
             cmbAccount.Name = "cmbAccount";
-            cmbAccount.Size = new Size(235, 23);
+            cmbAccount.Size = new Size(175, 23);
             cmbAccount.TabIndex = 6;
+            //
+            // btnNewAccount
+            //
+            btnNewAccount.BackColor = Color.LightSteelBlue;
+            btnNewAccount.FlatStyle = FlatStyle.Popup;
+            btnNewAccount.Location = new Point(258, 73);
+            btnNewAccount.Name = "btnNewAccount";
+            btnNewAccount.Size = new Size(55, 23);
+            btnNewAccount.TabIndex = 7;
+            btnNewAccount.Text = "New";
+            btnNewAccount.UseVisualStyleBackColor = false;
+            btnNewAccount.Click += btnNewAccount_Click;
             //
             // lblAccount
             //
@@ -244,7 +258,7 @@ namespace FruitAccounting.UI
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.White;
-            ClientSize = new Size(354, 216);
+            ClientSize = new Size(374, 216);
             Controls.Add(panelButtons);
             Controls.Add(panelInput);
             FormBorderStyle = FormBorderStyle.FixedDialog;
@@ -264,6 +278,7 @@ namespace FruitAccounting.UI
 
         private Panel panelInput;
         private ComboBox cmbAccount;
+        private Button btnNewAccount;
         private Label lblAccount;
         private ComboBox cmbGroup;
         private Label lblGroup;
