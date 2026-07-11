@@ -37,7 +37,7 @@ namespace FruitAccounting.UI
             colInclude = new DataGridViewCheckBoxColumn();
             colBillNo = new DataGridViewTextBoxColumn();
             colDedDate = new DataGridViewTextBoxColumn();
-            colParty = new DataGridViewTextBoxColumn();
+            colParty = new DataGridViewComboBoxColumn();
             colAmount = new DataGridViewTextBoxColumn();
             colDeductionId = new DataGridViewTextBoxColumn();
             panelFooter = new Panel();
@@ -290,6 +290,8 @@ namespace FruitAccounting.UI
             colParty.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
             colParty.HeaderText = "Party";
             colParty.Name = "colParty";
+            colParty.DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox;
+            colParty.FlatStyle = FlatStyle.Flat;
             //
             // colAmount
             //
@@ -679,7 +681,7 @@ namespace FruitAccounting.UI
         private DataGridViewCheckBoxColumn colInclude;
         private DataGridViewTextBoxColumn colBillNo;
         private DataGridViewTextBoxColumn colDedDate;
-        private DataGridViewTextBoxColumn colParty;
+        private DataGridViewComboBoxColumn colParty;
         private DataGridViewTextBoxColumn colAmount;
         private DataGridViewTextBoxColumn colDeductionId;
         private Panel panelFooter;

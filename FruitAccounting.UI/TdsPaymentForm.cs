@@ -91,6 +91,13 @@ namespace FruitAccounting.UI
                 foreach (var acc in _accounts)
                     combo.Items.Add($"{acc.Code} - {acc.Name}");
             }
+
+            // Includes blocked accounts too - a pulled deduction row can reference a supplier
+            // that's since been blocked, and the combo column needs that name in its list to
+            // render the cell without throwing.
+            colParty.Items.Clear();
+            foreach (var acc in all.OrderBy(a => a.Name))
+                colParty.Items.Add(acc.Name);
         }
 
         private async Task RefreshDaybooksAsync()
