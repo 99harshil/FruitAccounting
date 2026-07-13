@@ -367,9 +367,6 @@ namespace FruitAccounting.UI
                 case "Chitha":
                     newForm = new Form { Text = "Chitha Report", MdiParent = this };
                     break;
-                case "Journal":
-                    newForm = new Form { Text = "Journal Entry", MdiParent = this };
-                    break;
                 case "CashPayment":
                     var paymentServiceCash = Program.ServiceProvider?.GetService(typeof(PaymentService)) as PaymentService;
                     var accountServiceForPayCash = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
@@ -414,6 +411,13 @@ namespace FruitAccounting.UI
                     var bankReconciliationService = Program.ServiceProvider?.GetService(typeof(BankReconciliationService)) as BankReconciliationService;
                     if (bankReconciliationService != null)
                         newForm = new BankReconciliationForm(bankReconciliationService, _company.CompanyId, _financialYear.FinancialYearId);
+                    break;
+                case "Journal":
+                    var journalService = Program.ServiceProvider?.GetService(typeof(JournalService)) as JournalService;
+                    var accountServiceForJournal = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    if (journalService != null && accountServiceForJournal != null)
+                        newForm = new JournalForm(journalService, accountServiceForJournal,
+                            _company.CompanyId, _financialYear.FinancialYearId, _loggedInUser.UserId);
                     break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;

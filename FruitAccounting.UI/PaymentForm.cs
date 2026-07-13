@@ -22,6 +22,7 @@ namespace FruitAccounting.UI
         private List<Account> _accounts = new();
         private List<Daybook> _daybooks = new();
         private long _nextPaymentNo = 1;
+        private bool _suppressAccountSync;
 
         public PaymentForm(PaymentService paymentService, AccountService accountService, DaybookService daybookService,
             AccountGroupService accountGroupService, RegionService regionService,
@@ -101,9 +102,32 @@ namespace FruitAccounting.UI
         {
             var all = await _accountService.GetAllAccountsAsync(_companyId);
             _accounts = all.Where(a => !a.IsBlocked).OrderBy(a => a.Name).ToList();
-            cmbAccount.Items.Clear();
+            cmbAccountCode.Items.Clear();
+            cmbAccountName.Items.Clear();
             foreach (var acc in _accounts)
-                cmbAccount.Items.Add($"{acc.Code} - {acc.Name}");
+            {
+                cmbAccountCode.Items.Add(acc.Code);
+                cmbAccountName.Items.Add(acc.Name);
+            }
+        }
+
+        // cmbAccountCode and cmbAccountName are populated from the same _accounts list in the
+        // same order, so keeping them in sync is just mirroring the selected index - entering
+        // either the code or the name resolves the other.
+        private void cmbAccountCode_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_suppressAccountSync) return;
+            _suppressAccountSync = true;
+            cmbAccountName.SelectedIndex = cmbAccountCode.SelectedIndex;
+            _suppressAccountSync = false;
+        }
+
+        private void cmbAccountName_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (_suppressAccountSync) return;
+            _suppressAccountSync = true;
+            cmbAccountCode.SelectedIndex = cmbAccountName.SelectedIndex;
+            _suppressAccountSync = false;
         }
 
         private async Task RefreshDaybooksAsync()
@@ -136,7 +160,7 @@ namespace FruitAccounting.UI
             cmbDaybook.SelectedIndex = daybookIndex;
 
             int accountIndex = _accounts.FindIndex(a => a.AccountId == p.AccountId);
-            cmbAccount.SelectedIndex = accountIndex;
+            cmbAccountName.SelectedIndex = accountIndex;
 
             // txtPaidAmount holds the net amount actually paid; the gross Amount is redisplayed via Total Amount.
             txtPaidAmount.Text = p.TotalSettled.ToString(CultureInfo.InvariantCulture);
@@ -163,7 +187,7 @@ namespace FruitAccounting.UI
             txtTime.Text = DateTime.Now.ToString("HH:mm");
 
             cmbDaybook.SelectedIndex = -1;
-            cmbAccount.SelectedIndex = -1;
+            cmbAccountName.SelectedIndex = -1;
             txtPaidAmount.Text = "0";
             txtVatav.Text = "0";
             txtHamali.Text = "0";
@@ -188,7 +212,7 @@ namespace FruitAccounting.UI
                 return false;
             }
 
-            if (cmbAccount.SelectedIndex < 0)
+            if (cmbAccountName.SelectedIndex < 0)
             {
                 MessageBox.Show("Account is required", "Validation Error");
                 return false;
@@ -230,7 +254,7 @@ namespace FruitAccounting.UI
 
             var input = new PaymentService.PaymentInput
             {
-                AccountId = _accounts[cmbAccount.SelectedIndex].AccountId,
+                AccountId = _accounts[cmbAccountName.SelectedIndex].AccountId,
                 DaybookId = _daybooks[cmbDaybook.SelectedIndex].DaybookId,
                 PaymentDate = DateOnly.FromDateTime(dtpPaymentDate.Value),
                 Amount = netAmount + vatav + hamali,
@@ -276,7 +300,7 @@ namespace FruitAccounting.UI
 
             Control[] controls =
             {
-                dtpPaymentDate, cmbDaybook, btnNewDaybook, cmbAccount, btnNewAccount,
+                dtpPaymentDate, cmbDaybook, btnNewDaybook, cmbAccountCode, cmbAccountName, btnNewAccount,
                 txtPaidAmount, txtVatav, txtHamali,
                 txtChequeNo, txtBankName, txtBranch, txtRemarks, chkReturn, dtpReturnDate
             };

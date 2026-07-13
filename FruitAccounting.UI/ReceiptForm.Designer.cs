@@ -40,7 +40,8 @@ namespace FruitAccounting.UI
             lblRecAmount = new Label();
             txtRecAmount = new TextBox();
             btnNewAccount = new Button();
-            cmbAccount = new ComboBox();
+            cmbAccountCode = new ComboBox();
+            cmbAccountName = new ComboBox();
             lblAccount = new Label();
             btnNewDaybook = new Button();
             cmbDaybook = new ComboBox();
@@ -91,7 +92,8 @@ namespace FruitAccounting.UI
             panelInput.Controls.Add(lblRecAmount);
             panelInput.Controls.Add(txtRecAmount);
             panelInput.Controls.Add(btnNewAccount);
-            panelInput.Controls.Add(cmbAccount);
+            panelInput.Controls.Add(cmbAccountCode);
+            panelInput.Controls.Add(cmbAccountName);
             panelInput.Controls.Add(lblAccount);
             panelInput.Controls.Add(btnNewDaybook);
             panelInput.Controls.Add(cmbDaybook);
@@ -212,16 +214,29 @@ namespace FruitAccounting.UI
             lblAccount.TabIndex = 9;
             lblAccount.Text = "Account";
             //
-            // cmbAccount
+            // cmbAccountCode
             //
-            cmbAccount.BackColor = Color.FromArgb(255, 255, 192);
-            cmbAccount.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbAccount.FlatStyle = FlatStyle.Flat;
-            cmbAccount.FormattingEnabled = true;
-            cmbAccount.Location = new Point(90, 74);
-            cmbAccount.Name = "cmbAccount";
-            cmbAccount.Size = new Size(360, 23);
-            cmbAccount.TabIndex = 10;
+            cmbAccountCode.BackColor = Color.FromArgb(255, 255, 192);
+            cmbAccountCode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbAccountCode.FlatStyle = FlatStyle.Flat;
+            cmbAccountCode.FormattingEnabled = true;
+            cmbAccountCode.Location = new Point(90, 74);
+            cmbAccountCode.Name = "cmbAccountCode";
+            cmbAccountCode.Size = new Size(90, 23);
+            cmbAccountCode.TabIndex = 10;
+            cmbAccountCode.SelectedIndexChanged += cmbAccountCode_SelectedIndexChanged;
+            //
+            // cmbAccountName
+            //
+            cmbAccountName.BackColor = Color.FromArgb(255, 255, 192);
+            cmbAccountName.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbAccountName.FlatStyle = FlatStyle.Flat;
+            cmbAccountName.FormattingEnabled = true;
+            cmbAccountName.Location = new Point(185, 74);
+            cmbAccountName.Name = "cmbAccountName";
+            cmbAccountName.Size = new Size(265, 23);
+            cmbAccountName.TabIndex = 11;
+            cmbAccountName.SelectedIndexChanged += cmbAccountName_SelectedIndexChanged;
             //
             // btnNewAccount
             //
@@ -230,7 +245,7 @@ namespace FruitAccounting.UI
             btnNewAccount.Location = new Point(455, 73);
             btnNewAccount.Name = "btnNewAccount";
             btnNewAccount.Size = new Size(55, 23);
-            btnNewAccount.TabIndex = 11;
+            btnNewAccount.TabIndex = 12;
             btnNewAccount.Text = "New";
             btnNewAccount.UseVisualStyleBackColor = false;
             btnNewAccount.Click += btnNewAccount_Click;
@@ -632,7 +647,8 @@ namespace FruitAccounting.UI
         private ComboBox cmbDaybook;
         private Button btnNewDaybook;
         private Label lblAccount;
-        private ComboBox cmbAccount;
+        private ComboBox cmbAccountCode;
+        private ComboBox cmbAccountName;
         private Button btnNewAccount;
         private Label lblRecAmount;
         private TextBox txtRecAmount;
