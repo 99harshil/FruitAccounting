@@ -22,8 +22,10 @@ namespace FruitAccounting.UI
             dgvGroups = new DataGridView();
             colVoucherNo = new DataGridViewTextBoxColumn();
             colVoucherDate = new DataGridViewTextBoxColumn();
-            colNarration = new DataGridViewTextBoxColumn();
-            colTotalAmount = new DataGridViewTextBoxColumn();
+            colAccount = new DataGridViewTextBoxColumn();
+            colDebit = new DataGridViewTextBoxColumn();
+            colCredit = new DataGridViewTextBoxColumn();
+            colRemarks = new DataGridViewTextBoxColumn();
             colId = new DataGridViewTextBoxColumn();
             btnFind = new Button();
             btnSelect = new Button();
@@ -58,7 +60,7 @@ namespace FruitAccounting.UI
             dgvGroups.AllowUserToResizeRows = false;
             dgvGroups.BackgroundColor = Color.White;
             dgvGroups.ColumnHeadersHeightSizeMode = DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            dgvGroups.Columns.AddRange(new DataGridViewColumn[] { colVoucherNo, colVoucherDate, colNarration, colTotalAmount, colId });
+            dgvGroups.Columns.AddRange(new DataGridViewColumn[] { colVoucherNo, colVoucherDate, colAccount, colDebit, colCredit, colRemarks, colId });
             dgvGroups.Location = new Point(12, 65);
             dgvGroups.MultiSelect = false;
             dgvGroups.Name = "dgvGroups";
@@ -84,19 +86,33 @@ namespace FruitAccounting.UI
             colVoucherDate.ReadOnly = true;
             colVoucherDate.Width = 90;
             //
-            // colNarration
+            // colAccount
             //
-            colNarration.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
-            colNarration.HeaderText = "Narration";
-            colNarration.Name = "colNarration";
-            colNarration.ReadOnly = true;
+            colAccount.AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill;
+            colAccount.HeaderText = "Account";
+            colAccount.Name = "colAccount";
+            colAccount.ReadOnly = true;
             //
-            // colTotalAmount
+            // colDebit
             //
-            colTotalAmount.HeaderText = "Total Amount";
-            colTotalAmount.Name = "colTotalAmount";
-            colTotalAmount.ReadOnly = true;
-            colTotalAmount.Width = 110;
+            colDebit.HeaderText = "Debit";
+            colDebit.Name = "colDebit";
+            colDebit.ReadOnly = true;
+            colDebit.Width = 100;
+            //
+            // colCredit
+            //
+            colCredit.HeaderText = "Credit";
+            colCredit.Name = "colCredit";
+            colCredit.ReadOnly = true;
+            colCredit.Width = 100;
+            //
+            // colRemarks
+            //
+            colRemarks.HeaderText = "Remarks";
+            colRemarks.Name = "colRemarks";
+            colRemarks.ReadOnly = true;
+            colRemarks.Width = 180;
             //
             // btnFind
             //
@@ -166,8 +182,10 @@ namespace FruitAccounting.UI
         private DataGridView dgvGroups;
         private DataGridViewTextBoxColumn colVoucherNo;
         private DataGridViewTextBoxColumn colVoucherDate;
-        private DataGridViewTextBoxColumn colNarration;
-        private DataGridViewTextBoxColumn colTotalAmount;
+        private DataGridViewTextBoxColumn colAccount;
+        private DataGridViewTextBoxColumn colDebit;
+        private DataGridViewTextBoxColumn colCredit;
+        private DataGridViewTextBoxColumn colRemarks;
         private DataGridViewTextBoxColumn colId;
         protected Button btnFind;
         protected Button btnSelect;

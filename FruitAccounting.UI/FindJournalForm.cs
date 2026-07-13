@@ -50,20 +50,27 @@ namespace FruitAccounting.UI
             dgvGroups.Rows.Clear();
             foreach (var v in data)
             {
-                var totalDebit = v.JournalVoucherLines.Sum(l => l.Debit);
-                dgvGroups.Rows.Add(
-                    v.VoucherNo,
-                    v.VoucherDate.ToString("dd/MM/yyyy"),
-                    v.Narration,
-                    totalDebit.ToString("N2"),
-                    v.JournalVoucherId);
+                // One row per line (Debit and Credit each get their own row), not one summed row
+                // per voucher - Journal Vouchers can have any number of lines, and collapsing them
+                // to a single total hides which account was debited vs credited.
+                foreach (var line in v.JournalVoucherLines)
+                {
+                    dgvGroups.Rows.Add(
+                        v.VoucherNo,
+                        v.VoucherDate.ToString("dd/MM/yyyy"),
+                        line.Account?.Name,
+                        line.Debit == 0 ? "" : line.Debit.ToString("N2"),
+                        line.Credit == 0 ? "" : line.Credit.ToString("N2"),
+                        line.Narration,
+                        v.JournalVoucherId);
+                }
             }
 
             dgvGroups.EnableHeadersVisualStyles = false;
             dgvGroups.Columns[0].HeaderCell.Style.BackColor = Color.LimeGreen;
             dgvGroups.Columns[1].HeaderCell.Style.BackColor = Color.Cyan;
-            dgvGroups.Columns[3].HeaderCell.Style.BackColor = Color.LimeGreen;
-            dgvGroups.Columns[4].Visible = false; // Hide ID column
+            dgvGroups.Columns[2].HeaderCell.Style.BackColor = Color.LimeGreen;
+            dgvGroups.Columns[6].Visible = false; // Hide ID column
         }
 
         protected override List<JournalVoucher> ApplySearchFilter(string searchPattern, bool matchCase)
@@ -84,7 +91,7 @@ namespace FruitAccounting.UI
                 return null;
 
             var row = dgvGroups.SelectedRows[0];
-            var journalVoucherId = Convert.ToInt64(row.Cells[4].Value);
+            var journalVoucherId = Convert.ToInt64(row.Cells[6].Value);
             return _allData.FirstOrDefault(v => v.JournalVoucherId == journalVoucherId);
         }
 
