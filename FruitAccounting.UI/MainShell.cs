@@ -103,7 +103,6 @@ namespace FruitAccounting.UI
 
             menuItemAccount.DropDownItems.Add("Journal", null, (s, e) => ShowForm("Journal"));
             menuItemAccount.DropDownItems.Add("Bank Reconciliation", null, (s, e) => ShowForm("BankReconciliation"));
-            menuItemAccount.DropDownItems.Add("Expense Entry", null, (s, e) => ShowForm("ExpenseEntry"));
             menuItemAccount.DropDownItems.Add("TDS Return", null, (s, e) => ShowForm("TDSReturn"));
 
             var accountReportsSubMenu = new ToolStripMenuItem("Reports");
