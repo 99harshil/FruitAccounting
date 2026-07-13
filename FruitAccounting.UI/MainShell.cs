@@ -410,6 +410,11 @@ namespace FruitAccounting.UI
                         newForm = new TdsPaymentForm(tdsPaymentService, accountServiceForTds, daybookServiceForTds, accountGroupServiceForTds, regionServiceForTds,
                             _company.CompanyId, _financialYear.FinancialYearId, _loggedInUser.UserId);
                     break;
+                case "BankReconciliation":
+                    var bankReconciliationService = Program.ServiceProvider?.GetService(typeof(BankReconciliationService)) as BankReconciliationService;
+                    if (bankReconciliationService != null)
+                        newForm = new BankReconciliationForm(bankReconciliationService, _company.CompanyId, _financialYear.FinancialYearId);
+                    break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;
                     var accountServiceBank = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;

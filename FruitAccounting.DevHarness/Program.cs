@@ -1,5 +1,6 @@
 using FruitAccounting.Core.services;
 using FruitAccounting.Data.Context;
+using FruitAccounting.Data.Entities;
 using FruitAccounting.Data.Enums;
 using FruitAccounting.UI;
 using Microsoft.EntityFrameworkCore;
@@ -56,13 +57,18 @@ internal static class Program
         services.AddScoped<ReceiptService>();
         services.AddScoped<PaymentService>();
         services.AddScoped<TdsPaymentService>();
+        services.AddScoped<BankReconciliationService>();
+        services.AddScoped<UserPreferencesService>();
         using var provider = services.BuildServiceProvider();
 
         long companyId;
         long? financialYearId;
+        Company? company;
+        FinancialYear? financialYear;
+        User? user;
         using (var context = provider.GetRequiredService<IDbContextFactory<FruitAccountingContext>>().CreateDbContext())
         {
-            var company = context.Companies.AsNoTracking().OrderBy(c => c.CompanyId).FirstOrDefault();
+            company = context.Companies.AsNoTracking().OrderBy(c => c.CompanyId).FirstOrDefault();
             if (company == null)
             {
                 Console.WriteLine("No company found in the database. Nothing to test against.");
@@ -71,14 +77,18 @@ internal static class Program
             companyId = company.CompanyId;
             Console.WriteLine($"Using company: {company.Name} (Id={companyId})\n");
 
-            financialYearId = context.FinancialYears.AsNoTracking()
+            financialYear = context.FinancialYears.AsNoTracking()
                 .Where(fy => fy.CompanyId == companyId)
                 .OrderByDescending(fy => fy.IsActive)
                 .ThenByDescending(fy => fy.FinancialYearId)
-                .Select(fy => (long?)fy.FinancialYearId)
                 .FirstOrDefault();
+            financialYearId = financialYear?.FinancialYearId;
             if (financialYearId == null)
                 Console.WriteLine("No financial year found for this company - Receipt forms will be unavailable.\n");
+
+            user = context.Users.AsNoTracking().OrderBy(u => u.UserId).FirstOrDefault();
+            if (user == null)
+                Console.WriteLine("No user found in the database - Dashboard will be unavailable.\n");
         }
 
         var menu = new List<(string Label, Action Open)>
@@ -110,6 +120,13 @@ internal static class Program
                                         provider.GetRequiredService<ItemGroupService>(),
                                         companyId).ShowDialog()),
         };
+
+        if (financialYear != null && user != null)
+        {
+            menu.Add(("Dashboard (MainShell)", () => new MainShell(
+                                        provider.GetRequiredService<UserPreferencesService>(),
+                                        user, financialYear, company).ShowDialog()));
+        }
 
         if (financialYearId.HasValue)
         {
@@ -148,6 +165,9 @@ internal static class Program
                                         provider.GetRequiredService<AccountGroupService>(),
                                         provider.GetRequiredService<RegionService>(),
                                         companyId, financialYearId.Value, null).ShowDialog()));
+            menu.Add(("Bank Reconciliation", () => new BankReconciliationForm(
+                                        provider.GetRequiredService<BankReconciliationService>(),
+                                        companyId, financialYearId.Value).ShowDialog()));
         }
 
         while (true)
