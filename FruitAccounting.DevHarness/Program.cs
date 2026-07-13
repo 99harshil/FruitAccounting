@@ -59,6 +59,8 @@ internal static class Program
         services.AddScoped<TdsPaymentService>();
         services.AddScoped<BankReconciliationService>();
         services.AddScoped<JournalService>();
+        services.AddScoped<LotService>();
+        services.AddScoped<PurchaseService>();
         services.AddScoped<UserPreferencesService>();
         using var provider = services.BuildServiceProvider();
 
@@ -172,6 +174,14 @@ internal static class Program
             menu.Add(("Journal", () => new JournalForm(
                                         provider.GetRequiredService<JournalService>(),
                                         provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value, null).ShowDialog()));
+            menu.Add(("Purchase", () => new PurchaseForm(
+                                        provider.GetRequiredService<PurchaseService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        provider.GetRequiredService<ItemService>(),
+                                        provider.GetRequiredService<LotService>(),
                                         companyId, financialYearId.Value, null).ShowDialog()));
         }
 

@@ -1,6 +1,6 @@
 ﻿namespace FruitAccounting.Data.Enums;
 
-public enum PurchaseMode { WithCommission, Trading, WithoutCommission }
+public enum PurchaseMode { WithCommission, Trading, WithoutCommission, Direct }
 
 public enum VoucherType
 {

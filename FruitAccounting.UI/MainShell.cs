@@ -352,7 +352,16 @@ namespace FruitAccounting.UI
                     break;
                 // Transaction forms
                 case "Purchase":
-                    newForm = new Form { Text = "Purchase Entry", MdiParent = this };
+                    var purchaseService = Program.ServiceProvider?.GetService(typeof(PurchaseService)) as PurchaseService;
+                    var accountServiceForPurchase = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var accountGroupServiceForPurchase = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceForPurchase = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    var itemServiceForPurchase = Program.ServiceProvider?.GetService(typeof(ItemService)) as ItemService;
+                    var lotServiceForPurchase = Program.ServiceProvider?.GetService(typeof(LotService)) as LotService;
+                    if (purchaseService != null && accountServiceForPurchase != null && accountGroupServiceForPurchase != null
+                        && regionServiceForPurchase != null && itemServiceForPurchase != null && lotServiceForPurchase != null)
+                        newForm = new PurchaseForm(purchaseService, accountServiceForPurchase, accountGroupServiceForPurchase, regionServiceForPurchase,
+                            itemServiceForPurchase, lotServiceForPurchase, _company.CompanyId, _financialYear.FinancialYearId, _loggedInUser.UserId);
                     break;
                 case "Sales":
                     newForm = new Form { Text = "Sales Entry", MdiParent = this };

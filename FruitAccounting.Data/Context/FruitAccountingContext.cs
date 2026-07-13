@@ -121,7 +121,7 @@ public partial class FruitAccountingContext : DbContext
             .HasPostgresEnum("dr_cr", new[] { "debit", "credit" })
             .HasPostgresEnum("lot_op_type", new[] { "split", "merge", "transfer" })
             .HasPostgresEnum("payment_mode", new[] { "cash", "bank", "cheque" })
-            .HasPostgresEnum("purchase_mode", new[] { "with_commission", "trading", "without_commission" })
+            .HasPostgresEnum("purchase_mode", new[] { "with_commission", "trading", "without_commission", "direct" })
             .HasPostgresEnum("user_role", new[] { "admin", "operator", "readonly" })
             .HasPostgresEnum("voucher_type", new[] { "purchase_bill", "sales_bill", "receipt", "payment", "journal", "bank_entry", "crate", "cold_storage", "desavar_purchase", "desavar_sale", "import_purchase", "import_sale", "opening_balance", "tds_payment" });
 
@@ -1661,6 +1661,8 @@ public partial class FruitAccountingContext : DbContext
                 .HasPrecision(14, 2)
                 .HasDefaultValueSql("0")
                 .HasColumnName("amanat");
+            entity.Property(e => e.AmanatPartyId).HasColumnName("amanat_party_id");
+            entity.Property(e => e.CratePartyId).HasColumnName("crate_party_id");
             entity.Property(e => e.AuthorisedBy)
                 .HasMaxLength(60)
                 .HasColumnName("authorised_by");
@@ -1697,6 +1699,18 @@ public partial class FruitAccountingContext : DbContext
                 .HasPrecision(14, 2)
                 .HasDefaultValueSql("0")
                 .HasColumnName("freight");
+            entity.Property(e => e.FreightRate)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("freight_rate");
+            entity.Property(e => e.LabourRate)
+                .HasPrecision(10, 2)
+                .HasDefaultValueSql("0")
+                .HasColumnName("labour_rate");
+            entity.Property(e => e.VatavPct)
+                .HasPrecision(6, 3)
+                .HasDefaultValueSql("0")
+                .HasColumnName("vatav_pct");
             entity.Property(e => e.GrossAmount)
                 .HasPrecision(14, 2)
                 .HasDefaultValueSql("0")
@@ -1789,6 +1803,14 @@ public partial class FruitAccountingContext : DbContext
                 .HasForeignKey(d => d.SupplierId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("purchase_bills_supplier_id_fkey");
+
+            entity.HasOne(d => d.AmanatParty).WithMany()
+                .HasForeignKey(d => d.AmanatPartyId)
+                .HasConstraintName("purchase_bills_amanat_party_id_fkey");
+
+            entity.HasOne(d => d.CrateParty).WithMany()
+                .HasForeignKey(d => d.CratePartyId)
+                .HasConstraintName("purchase_bills_crate_party_id_fkey");
         });
 
         modelBuilder.Entity<PurchaseBillItem>(entity =>
@@ -2220,6 +2242,7 @@ public partial class FruitAccountingContext : DbContext
                 .HasColumnName("deducted_at");
             entity.Property(e => e.FinancialYearId).HasColumnName("financial_year_id");
             entity.Property(e => e.PaymentId).HasColumnName("payment_id");
+            entity.Property(e => e.PurchaseBillId).HasColumnName("purchase_bill_id");
             entity.Property(e => e.SupplierId).HasColumnName("supplier_id");
             entity.Property(e => e.TaxableExcess)
                 .HasPrecision(14, 2)
@@ -2241,6 +2264,11 @@ public partial class FruitAccountingContext : DbContext
                 .HasForeignKey(d => d.PaymentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
                 .HasConstraintName("tds_purchase_deductions_payment_id_fkey");
+
+            entity.HasOne(d => d.PurchaseBill).WithMany()
+                .HasForeignKey(d => d.PurchaseBillId)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("tds_purchase_deductions_purchase_bill_id_fkey");
 
             entity.HasOne(d => d.Supplier).WithMany(p => p.TdsPurchaseDeductions)
                 .HasForeignKey(d => d.SupplierId)

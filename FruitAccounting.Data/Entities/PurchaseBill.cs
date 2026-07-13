@@ -26,6 +26,10 @@ public partial class PurchaseBill
 
     public string? DeliveryPerson { get; set; }
 
+    public long? AmanatPartyId { get; set; }
+
+    public long? CratePartyId { get; set; }
+
     public decimal GrossAmount { get; set; }
 
     public decimal CommissionPct { get; set; }
@@ -36,7 +40,11 @@ public partial class PurchaseBill
 
     public decimal? MarketFee { get; set; }
 
+    public decimal? FreightRate { get; set; }
+
     public decimal? Freight { get; set; }
+
+    public decimal? LabourRate { get; set; }
 
     public decimal? Labour { get; set; }
 
@@ -45,6 +53,8 @@ public partial class PurchaseBill
     public decimal? PackingMaterial { get; set; }
 
     public decimal? ColdStore { get; set; }
+
+    public decimal? VatavPct { get; set; }
 
     public decimal? Vatav { get; set; }
 
@@ -89,4 +99,8 @@ public partial class PurchaseBill
     public virtual ICollection<PurchaseBillItem> PurchaseBillItems { get; set; } = new List<PurchaseBillItem>();
 
     public virtual Account Supplier { get; set; } = null!;
+
+    public virtual Account? AmanatParty { get; set; }
+
+    public virtual Account? CrateParty { get; set; }
 }

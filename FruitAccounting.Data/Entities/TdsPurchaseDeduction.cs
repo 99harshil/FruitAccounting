@@ -11,7 +11,9 @@ public partial class TdsPurchaseDeduction
 
     public long SupplierId { get; set; }
 
-    public long PaymentId { get; set; }
+    public long? PaymentId { get; set; }
+
+    public long? PurchaseBillId { get; set; }
 
     public decimal CumulativeBefore { get; set; }
 
@@ -27,7 +29,9 @@ public partial class TdsPurchaseDeduction
 
     public virtual FinancialYear FinancialYear { get; set; } = null!;
 
-    public virtual Payment Payment { get; set; } = null!;
+    public virtual Payment? Payment { get; set; }
+
+    public virtual PurchaseBill? PurchaseBill { get; set; }
 
     public virtual Account Supplier { get; set; } = null!;
 
