@@ -60,6 +60,7 @@ internal static class Program
         services.AddScoped<BankReconciliationService>();
         services.AddScoped<JournalService>();
         services.AddScoped<LotService>();
+        services.AddScoped<Tds194QService>();
         services.AddScoped<PurchaseService>();
         services.AddScoped<UserPreferencesService>();
         using var provider = services.BuildServiceProvider();

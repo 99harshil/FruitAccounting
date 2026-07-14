@@ -33,6 +33,8 @@ namespace FruitAccounting.UI
             txtChequeNo = new TextBox();
             lblHamali = new Label();
             txtHamali = new TextBox();
+            lblTds = new Label();
+            txtTdsAmt = new TextBox();
             lblVatav = new Label();
             txtVatav = new TextBox();
             lblPaidAmount = new Label();
@@ -83,6 +85,8 @@ namespace FruitAccounting.UI
             panelInput.Controls.Add(txtChequeNo);
             panelInput.Controls.Add(lblHamali);
             panelInput.Controls.Add(txtHamali);
+            panelInput.Controls.Add(lblTds);
+            panelInput.Controls.Add(txtTdsAmt);
             panelInput.Controls.Add(lblVatav);
             panelInput.Controls.Add(txtVatav);
             panelInput.Controls.Add(lblPaidAmount);
@@ -144,6 +148,7 @@ namespace FruitAccounting.UI
             dtpPaymentDate.Name = "dtpPaymentDate";
             dtpPaymentDate.Size = new Size(110, 23);
             dtpPaymentDate.TabIndex = 3;
+            dtpPaymentDate.ValueChanged += AmountField_Changed;
             //
             // txtTime
             //
@@ -308,6 +313,28 @@ namespace FruitAccounting.UI
             txtHamali.TabIndex = 17;
             txtHamali.Text = "0";
             txtHamali.TextChanged += AmountField_Changed;
+            //
+            // lblTds
+            //
+            lblTds.AutoSize = true;
+            lblTds.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblTds.ForeColor = Color.Red;
+            lblTds.Location = new Point(230, 138);
+            lblTds.Name = "lblTds";
+            lblTds.Size = new Size(30, 15);
+            lblTds.TabIndex = 18;
+            lblTds.Text = "TDS";
+            //
+            // txtTdsAmt
+            //
+            txtTdsAmt.BackColor = Color.WhiteSmoke;
+            txtTdsAmt.BorderStyle = BorderStyle.FixedSingle;
+            txtTdsAmt.Location = new Point(300, 135);
+            txtTdsAmt.Name = "txtTdsAmt";
+            txtTdsAmt.ReadOnly = true;
+            txtTdsAmt.Size = new Size(100, 23);
+            txtTdsAmt.TabIndex = 19;
+            txtTdsAmt.Text = "0";
             //
             // lblChequeNo
             //
@@ -631,6 +658,8 @@ namespace FruitAccounting.UI
         private TextBox txtVatav;
         private Label lblHamali;
         private TextBox txtHamali;
+        private Label lblTds;
+        private TextBox txtTdsAmt;
         private Label lblChequeNo;
         private TextBox txtChequeNo;
         private Label lblBank;

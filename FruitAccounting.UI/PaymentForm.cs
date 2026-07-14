@@ -120,6 +120,7 @@ namespace FruitAccounting.UI
             _suppressAccountSync = true;
             cmbAccountName.SelectedIndex = cmbAccountCode.SelectedIndex;
             _suppressAccountSync = false;
+            _ = UpdateComputedFieldsAsync();
         }
 
         private void cmbAccountName_SelectedIndexChanged(object sender, EventArgs e)
@@ -128,6 +129,7 @@ namespace FruitAccounting.UI
             _suppressAccountSync = true;
             cmbAccountCode.SelectedIndex = cmbAccountName.SelectedIndex;
             _suppressAccountSync = false;
+            _ = UpdateComputedFieldsAsync();
         }
 
         private async Task RefreshDaybooksAsync()
@@ -176,7 +178,7 @@ namespace FruitAccounting.UI
             if (p.ReturnedDate.HasValue)
                 dtpReturnDate.Value = p.ReturnedDate.Value.ToDateTime(TimeOnly.MinValue);
 
-            UpdateComputedFields();
+            _ = UpdateComputedFieldsAsync();
             UpdateNavigationButtons();
         }
 
@@ -191,6 +193,7 @@ namespace FruitAccounting.UI
             txtPaidAmount.Text = "0";
             txtVatav.Text = "0";
             txtHamali.Text = "0";
+            txtTdsAmt.Text = "0";
             txtChequeNo.Clear();
             txtBankName.Clear();
             txtBranch.Clear();
@@ -198,7 +201,7 @@ namespace FruitAccounting.UI
             chkReturn.Checked = false;
             dtpReturnDate.Checked = false;
 
-            UpdateComputedFields();
+            _ = UpdateComputedFieldsAsync();
 
             _currentIndex = -1;
             UpdateNavigationButtons();
@@ -311,7 +314,11 @@ namespace FruitAccounting.UI
 
         // txtPaidAmount holds the net amount actually paid; Vatav/Hamali are
         // added on top to arrive at the gross bill total.
-        private void UpdateComputedFields()
+        // TDS (194Q) is a live preview only, computed from the combined Payment+Purchase-Bill
+        // cumulative for this party/FY - it does NOT reduce txtPaidAmount/TotalSettled (the cash
+        // handed over stays exactly what's typed); it's posted as a separate extra charge against
+        // the party at save time (see PaymentService.BuildAndAddLedgerEntriesAsync).
+        private async Task UpdateComputedFieldsAsync()
         {
             decimal.TryParse(txtPaidAmount.Text, out var amount);
             decimal.TryParse(txtVatav.Text, out var vatav);
@@ -320,9 +327,21 @@ namespace FruitAccounting.UI
             var grossTotal = amount + vatav + hamali;
             txtTotalAmount.Text = grossTotal.ToString("N2", CultureInfo.InvariantCulture);
             lblAmountWords.Text = AmountInWords.Convert(grossTotal) + " Only.";
+
+            if (cmbAccountName.SelectedIndex >= 0 && grossTotal > 0)
+            {
+                var accountId = _accounts[cmbAccountName.SelectedIndex].AccountId;
+                var excludingId = _isAddMode || _currentIndex < 0 ? (long?)null : _dataList[_currentIndex].PaymentId;
+                var (_, tdsAmount) = await _paymentService.PreviewTdsAsync(accountId, _financialYearId, grossTotal, DateOnly.FromDateTime(dtpPaymentDate.Value), excludingId);
+                txtTdsAmt.Text = tdsAmount.ToString("N2", CultureInfo.InvariantCulture);
+            }
+            else
+            {
+                txtTdsAmt.Text = "0";
+            }
         }
 
-        private void AmountField_Changed(object sender, EventArgs e) => UpdateComputedFields();
+        private void AmountField_Changed(object sender, EventArgs e) => _ = UpdateComputedFieldsAsync();
 
         private async void btnAdd_Click(object sender, EventArgs e)
         {

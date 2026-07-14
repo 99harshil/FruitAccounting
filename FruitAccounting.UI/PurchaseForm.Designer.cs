@@ -532,10 +532,10 @@ namespace FruitAccounting.UI
             txtCommissionAmt.BorderStyle = BorderStyle.FixedSingle;
             txtCommissionAmt.Location = new Point(195, 12);
             txtCommissionAmt.Name = "txtCommissionAmt";
-            txtCommissionAmt.ReadOnly = true;
             txtCommissionAmt.Size = new Size(90, 23);
             txtCommissionAmt.TabIndex = 2;
             txtCommissionAmt.Text = "0";
+            txtCommissionAmt.TextChanged += FooterField_Changed;
             //
             // lblFreight
             //
@@ -564,10 +564,10 @@ namespace FruitAccounting.UI
             txtFreightAmt.BorderStyle = BorderStyle.FixedSingle;
             txtFreightAmt.Location = new Point(485, 12);
             txtFreightAmt.Name = "txtFreightAmt";
-            txtFreightAmt.ReadOnly = true;
             txtFreightAmt.Size = new Size(90, 23);
             txtFreightAmt.TabIndex = 5;
             txtFreightAmt.Text = "0";
+            txtFreightAmt.TextChanged += FooterField_Changed;
             //
             // lblLabour
             //
@@ -596,10 +596,10 @@ namespace FruitAccounting.UI
             txtLabourAmt.BorderStyle = BorderStyle.FixedSingle;
             txtLabourAmt.Location = new Point(785, 12);
             txtLabourAmt.Name = "txtLabourAmt";
-            txtLabourAmt.ReadOnly = true;
             txtLabourAmt.Size = new Size(90, 23);
             txtLabourAmt.TabIndex = 8;
             txtLabourAmt.Text = "0";
+            txtLabourAmt.TextChanged += FooterField_Changed;
             //
             // lblVatav
             //
@@ -628,10 +628,10 @@ namespace FruitAccounting.UI
             txtVatavAmt.BorderStyle = BorderStyle.FixedSingle;
             txtVatavAmt.Location = new Point(195, 42);
             txtVatavAmt.Name = "txtVatavAmt";
-            txtVatavAmt.ReadOnly = true;
             txtVatavAmt.Size = new Size(90, 23);
             txtVatavAmt.TabIndex = 11;
             txtVatavAmt.Text = "0";
+            txtVatavAmt.TextChanged += FooterField_Changed;
             //
             // lblMarketFee
             //
@@ -660,10 +660,10 @@ namespace FruitAccounting.UI
             txtMarketFeeAmt.BorderStyle = BorderStyle.FixedSingle;
             txtMarketFeeAmt.Location = new Point(485, 42);
             txtMarketFeeAmt.Name = "txtMarketFeeAmt";
-            txtMarketFeeAmt.ReadOnly = true;
             txtMarketFeeAmt.Size = new Size(90, 23);
             txtMarketFeeAmt.TabIndex = 14;
             txtMarketFeeAmt.Text = "0";
+            txtMarketFeeAmt.TextChanged += FooterField_Changed;
             //
             // lblPostage
             //
@@ -886,12 +886,13 @@ namespace FruitAccounting.UI
             txtTdsPct.Size = new Size(70, 23);
             txtTdsPct.TabIndex = 7;
             txtTdsPct.Text = "0";
+            txtTdsPct.Visible = false;
             //
             // txtTdsAmt
             //
             txtTdsAmt.BackColor = Color.WhiteSmoke;
             txtTdsAmt.BorderStyle = BorderStyle.FixedSingle;
-            txtTdsAmt.Location = new Point(735, 7);
+            txtTdsAmt.Location = new Point(660, 7);
             txtTdsAmt.Name = "txtTdsAmt";
             txtTdsAmt.ReadOnly = true;
             txtTdsAmt.Size = new Size(90, 23);

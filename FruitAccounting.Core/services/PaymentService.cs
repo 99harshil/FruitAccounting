@@ -9,12 +9,15 @@ public class PaymentService
 {
     private const string VatavExpensesKey = "VATAV_EXPENSES_ACCOUNT_ID";
     private const string HamaliPayableKey = "HAMALI_PAYABLE_ACCOUNT_ID";
+    private const string TdsPayableKey = "TDS_PAYABLE_ACCOUNT_ID";
 
     private readonly IDbContextFactory<FruitAccountingContext> _contextFactory;
+    private readonly Tds194QService _tds194QService;
 
-    public PaymentService(IDbContextFactory<FruitAccountingContext> contextFactory)
+    public PaymentService(IDbContextFactory<FruitAccountingContext> contextFactory, Tds194QService tds194QService)
     {
         _contextFactory = contextFactory;
+        _tds194QService = tds194QService;
     }
 
     public async Task<List<Payment>> GetAllPaymentsAsync(long financialYearId, char bookType)
@@ -75,6 +78,14 @@ public class PaymentService
                 .MaxAsync(p => (int?)p.PaymentNo) ?? 0;
             nextPaymentNo++;
 
+            // 194Q also triggers on payment (not just on a booked Purchase Bill) - an advance can
+            // itself cross the per-supplier ₹50L threshold. The cash actually handed over doesn't
+            // change; TDS is recorded as an extra ledger charge against the party instead (see
+            // BuildAndAddLedgerEntriesAsync).
+            var (tdsRate, cumulativeBefore, taxableExcess, tdsAmount) = await _tds194QService.ComputeAsync(
+                context, input.AccountId, input.FinancialYearId, input.Amount, input.PaymentDate,
+                isPayment: true, excludingPurchaseBillId: null, excludingPaymentId: null);
+
             var payment = new Payment
             {
                 FinancialYearId = input.FinancialYearId,
@@ -90,6 +101,7 @@ public class PaymentService
                 Amount = input.Amount,
                 Vatav = input.Vatav,
                 Hamali = input.Hamali,
+                TdsAmount = tdsAmount,
                 TotalSettled = totalSettled,
                 IsReturned = input.IsReturned,
                 ReturnedDate = input.ReturnedDate,
@@ -100,6 +112,21 @@ public class PaymentService
 
             context.Payments.Add(payment);
             await context.SaveChangesAsync();
+
+            if (tdsAmount != 0)
+            {
+                context.TdsPurchaseDeductions.Add(new TdsPurchaseDeduction
+                {
+                    FinancialYearId = input.FinancialYearId,
+                    SupplierId = input.AccountId,
+                    PaymentId = payment.PaymentId,
+                    CumulativeBefore = cumulativeBefore,
+                    TaxableExcess = taxableExcess,
+                    TdsRate = tdsRate,
+                    TdsAmount = tdsAmount,
+                    DeductedAt = DateTime.UtcNow
+                });
+            }
 
             var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, payment, daybook!.LinkedAccountId!.Value);
             if (!postOk)
@@ -133,6 +160,10 @@ public class PaymentService
             if (!valid)
                 return (false, validationMessage);
 
+            var (tdsRate, cumulativeBefore, taxableExcess, tdsAmount) = await _tds194QService.ComputeAsync(
+                context, input.AccountId, input.FinancialYearId, input.Amount, input.PaymentDate,
+                isPayment: true, excludingPurchaseBillId: null, excludingPaymentId: paymentId);
+
             payment.PaymentDate = input.PaymentDate;
             payment.AccountId = input.AccountId;
             payment.DaybookId = input.DaybookId;
@@ -144,6 +175,7 @@ public class PaymentService
             payment.Amount = input.Amount;
             payment.Vatav = input.Vatav;
             payment.Hamali = input.Hamali;
+            payment.TdsAmount = tdsAmount;
             payment.TotalSettled = totalSettled;
             payment.IsReturned = input.IsReturned;
             payment.ReturnedDate = input.ReturnedDate;
@@ -155,6 +187,26 @@ public class PaymentService
                 .Where(e => e.VoucherId == paymentId && e.VoucherType == VoucherType.Payment)
                 .ToListAsync();
             context.LedgerEntries.RemoveRange(oldEntries);
+
+            var oldDeductions = await context.TdsPurchaseDeductions
+                .Where(d => d.PaymentId == paymentId)
+                .ToListAsync();
+            context.TdsPurchaseDeductions.RemoveRange(oldDeductions);
+
+            if (tdsAmount != 0)
+            {
+                context.TdsPurchaseDeductions.Add(new TdsPurchaseDeduction
+                {
+                    FinancialYearId = input.FinancialYearId,
+                    SupplierId = input.AccountId,
+                    PaymentId = payment.PaymentId,
+                    CumulativeBefore = cumulativeBefore,
+                    TaxableExcess = taxableExcess,
+                    TdsRate = tdsRate,
+                    TdsAmount = tdsAmount,
+                    DeductedAt = DateTime.UtcNow
+                });
+            }
 
             await context.SaveChangesAsync();
 
@@ -197,6 +249,11 @@ public class PaymentService
                 .ToListAsync();
             context.LedgerEntries.RemoveRange(entries);
 
+            var deductions = await context.TdsPurchaseDeductions
+                .Where(d => d.PaymentId == paymentId)
+                .ToListAsync();
+            context.TdsPurchaseDeductions.RemoveRange(deductions);
+
             context.Payments.Remove(payment);
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
@@ -226,6 +283,15 @@ public class PaymentService
             return (false, "Total Amount works out negative - check Vatav / Hamali against Paid Amount", 0, null);
 
         return (true, "", totalSettled, daybook);
+    }
+
+    // Lets the UI show a live TDS estimate as the payment is being entered, using the same
+    // combined Payment+Purchase-Bill 194Q cumulative logic that actually runs at save time.
+    public async Task<(decimal rate, decimal tdsAmount)> PreviewTdsAsync(long accountId, long financialYearId, decimal amount, DateOnly paymentDate, long? excludingPaymentId)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        var (rate, _, _, tdsAmount) = await _tds194QService.ComputeAsync(context, accountId, financialYearId, amount, paymentDate, isPayment: true, excludingPurchaseBillId: null, excludingPaymentId);
+        return (rate, tdsAmount);
     }
 
     private async Task<(bool success, string message)> BuildAndAddLedgerEntriesAsync(
@@ -302,6 +368,45 @@ public class PaymentService
                 VoucherId = payment.PaymentId,
                 VoucherType = VoucherType.Payment,
                 Narration = $"Hamali withheld on Payment #{payment.PaymentNo}",
+                ContraAccountId = payment.AccountId,
+                CreatedAt = DateTime.UtcNow
+            });
+        }
+
+        if (payment.TdsAmount != 0)
+        {
+            var tdsPayableAccountId = await GetConfiguredAccountIdAsync(context, TdsPayableKey);
+            if (tdsPayableAccountId == null)
+                return (false, "TDS amount computed, but no TDS Payable account is configured (system_parameters: TDS_PAYABLE_ACCOUNT_ID)");
+
+            // TDS doesn't reduce the cash actually handed over (payment.Amount/TotalSettled are
+            // unaffected) - it's recorded as an extra charge against the party instead: a further
+            // Debit on top of the Amount debit above, paired with a Credit to TDS Payable for what
+            // gets remitted to the government on their behalf.
+            entries.Add(new LedgerEntry
+            {
+                FinancialYearId = payment.FinancialYearId,
+                EntryDate = payment.PaymentDate,
+                AccountId = payment.AccountId,
+                Debit = payment.TdsAmount,
+                Credit = 0,
+                VoucherId = payment.PaymentId,
+                VoucherType = VoucherType.Payment,
+                Narration = $"194Q TDS on Payment #{payment.PaymentNo}",
+                ContraAccountId = tdsPayableAccountId.Value,
+                CreatedAt = DateTime.UtcNow
+            });
+
+            entries.Add(new LedgerEntry
+            {
+                FinancialYearId = payment.FinancialYearId,
+                EntryDate = payment.PaymentDate,
+                AccountId = tdsPayableAccountId.Value,
+                Debit = 0,
+                Credit = payment.TdsAmount,
+                VoucherId = payment.PaymentId,
+                VoucherType = VoucherType.Payment,
+                Narration = $"194Q TDS on Payment #{payment.PaymentNo}",
                 ContraAccountId = payment.AccountId,
                 CreatedAt = DateTime.UtcNow
             });

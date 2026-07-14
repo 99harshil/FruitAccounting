@@ -14,14 +14,14 @@ public class PurchaseService
     private const string HamaliPayableKey = "HAMALI_PAYABLE_ACCOUNT_ID"; // reused for Labour - same real-world concept
     private const string PostageRecoveredKey = "POSTAGE_RECOVERED_ACCOUNT_ID";
     private const string TdsPayableKey = "TDS_PAYABLE_ACCOUNT_ID";
-    private const string Tds194QRateKey = "TDS_194Q_RATE";
-    private const string Tds194QThresholdKey = "TDS_194Q_THRESHOLD";
 
     private readonly IDbContextFactory<FruitAccountingContext> _contextFactory;
+    private readonly Tds194QService _tds194QService;
 
-    public PurchaseService(IDbContextFactory<FruitAccountingContext> contextFactory)
+    public PurchaseService(IDbContextFactory<FruitAccountingContext> contextFactory, Tds194QService tds194QService)
     {
         _contextFactory = contextFactory;
+        _tds194QService = tds194QService;
     }
 
     public async Task<List<PurchaseBill>> GetAllPurchaseBillsAsync(long financialYearId)
@@ -80,6 +80,15 @@ public class PurchaseService
         public decimal DdCharge { get; set; }
         public decimal Inam { get; set; }
         public decimal OtherDeduction { get; set; }
+
+        // Manually-typed amounts from the UI's amount boxes - used in place of the %/rate
+        // calculation whenever the corresponding %/rate is 0 (the user typed a total directly
+        // instead of a %/rate to compute it from).
+        public decimal CommissionAmt { get; set; }
+        public decimal FreightAmt { get; set; }
+        public decimal LabourAmt { get; set; }
+        public decimal VatavAmt { get; set; }
+        public decimal MarketFeeAmt { get; set; }
         public string? Remarks { get; set; }
         public long FinancialYearId { get; set; }
         public long? CreatedBy { get; set; }
@@ -339,7 +348,7 @@ public class PurchaseService
     public async Task<(decimal rate, decimal tdsAmount)> PreviewTdsAsync(long supplierId, long financialYearId, decimal grossAmount, DateOnly billDate, long? excludingPurchaseBillId)
     {
         using var context = _contextFactory.CreateDbContext();
-        var (rate, _, _, tdsAmount) = await Compute194QAsync(context, supplierId, financialYearId, grossAmount, billDate, excludingPurchaseBillId);
+        var (rate, _, _, tdsAmount) = await _tds194QService.ComputeAsync(context, supplierId, financialYearId, grossAmount, billDate, isPayment: false, excludingPurchaseBillId, excludingPaymentId: null);
         return (rate, tdsAmount);
     }
 
@@ -361,10 +370,13 @@ public class PurchaseService
         return (true, "");
     }
 
-    // Trading and Direct modes are straight cash purchases - no commission/vatav/freight/labour
-    // deducted, Net Amount equals Gross exactly. WithoutCommission still deducts commission using
-    // the same math as WithCommission - the "without" only affects the UI (the amount stays
-    // hidden/blank on screen), not the actual ledger deduction.
+    // Direct mode is a straight cash purchase - no commission/vatav/freight/labour deducted,
+    // Net Amount equals Gross exactly. Trading deducts the same as WithCommission (whatever
+    // expense/commission/freight is entered comes off Net Amount). WithoutCommission has no
+    // separate commission-income leg at all - the UI already bakes the commission % into each
+    // item line's Amount before it ever reaches here, so `input.Items.Sum(i => i.Amount)` IS the
+    // post-commission Gross Amount for that mode; CommissionAmount stays 0 to avoid deducting
+    // (and booking to Commission Income) a second time.
     private async Task<ComputedTotals> ComputeTotalsAsync(FruitAccountingContext context, PurchaseBillInput input, long? excludingPurchaseBillId)
     {
         var totals = new ComputedTotals
@@ -372,21 +384,27 @@ public class PurchaseService
             GrossAmount = input.Items.Sum(i => i.Amount)
         };
 
-        bool noDeductions = input.Mode == PurchaseMode.Trading || input.Mode == PurchaseMode.Direct;
+        bool noDeductions = input.Mode == PurchaseMode.Direct;
         var totalQty = input.Items.Sum(i => i.Quantity);
 
         if (!noDeductions)
         {
-            totals.CommissionAmount = Math.Round(totals.GrossAmount * input.CommissionPct / 100, 2);
-            totals.MarketFee = Math.Round(totals.GrossAmount * input.MarketFeePct / 100, 2);
-            totals.Freight = Math.Round(totalQty * input.FreightRate, 2);
-            totals.Labour = Math.Round(totalQty * input.LabourRate, 2);
-            totals.Vatav = Math.Round(totals.GrossAmount * input.VatavPct / 100, 2);
+            // Whenever a %/rate is 0, fall back to whatever amount was typed directly into the
+            // corresponding amount box, instead of auto-computing (and overwriting) it as zero.
+            totals.CommissionAmount = input.Mode == PurchaseMode.WithoutCommission
+                ? 0
+                : input.CommissionPct > 0
+                    ? Math.Round(totals.GrossAmount * input.CommissionPct / 100, 2)
+                    : input.CommissionAmt;
+            totals.MarketFee = input.MarketFeePct > 0 ? Math.Round(totals.GrossAmount * input.MarketFeePct / 100, 2) : input.MarketFeeAmt;
+            totals.Freight = input.FreightRate > 0 ? Math.Round(totalQty * input.FreightRate, 2) : input.FreightAmt;
+            totals.Labour = input.LabourRate > 0 ? Math.Round(totalQty * input.LabourRate, 2) : input.LabourAmt;
+            totals.Vatav = input.VatavPct > 0 ? Math.Round(totals.GrossAmount * input.VatavPct / 100, 2) : input.VatavAmt;
         }
 
         var (tdsRate, cumulativeBefore, taxableExcess, tdsAmount) = noDeductions
             ? (0m, 0m, 0m, 0m)
-            : await Compute194QAsync(context, input.SupplierId, input.FinancialYearId, totals.GrossAmount, input.BillDate, excludingPurchaseBillId);
+            : await _tds194QService.ComputeAsync(context, input.SupplierId, input.FinancialYearId, totals.GrossAmount, input.BillDate, isPayment: false, excludingPurchaseBillId, excludingPaymentId: null);
         totals.TdsRate = tdsRate;
         totals.CumulativeBefore = cumulativeBefore;
         totals.TaxableExcess = taxableExcess;
@@ -399,35 +417,6 @@ public class PurchaseService
                 - input.DdCharge - input.Inam - input.OtherDeduction - totals.TdsAmount;
 
         return totals;
-    }
-
-    // Section 194Q: TDS applies once cumulative purchases from this supplier in this financial year
-    // cross the threshold. The bill that crosses it is taxed only on the excess over the threshold;
-    // every bill after that is taxed on its full value.
-    private async Task<(decimal rate, decimal cumulativeBefore, decimal taxableExcess, decimal tdsAmount)> Compute194QAsync(
-        FruitAccountingContext context, long supplierId, long financialYearId, decimal thisGrossAmount, DateOnly billDate, long? excludingPurchaseBillId)
-    {
-        var rateParam = await context.SystemParameters.AsNoTracking().FirstOrDefaultAsync(p => p.ParameterKey == Tds194QRateKey);
-        var thresholdParam = await context.SystemParameters.AsNoTracking().FirstOrDefaultAsync(p => p.ParameterKey == Tds194QThresholdKey);
-
-        var rate = rateParam != null && decimal.TryParse(rateParam.ParameterValue, out var r) ? r : 0;
-        var threshold = thresholdParam != null && decimal.TryParse(thresholdParam.ParameterValue, out var t) ? t : decimal.MaxValue;
-
-        var priorBillsQuery = context.PurchaseBills
-            .Where(p => p.SupplierId == supplierId && p.FinancialYearId == financialYearId
-                && (p.BillDate < billDate || (p.BillDate == billDate && p.BillNo < 0)));
-        // BillNo isn't known yet for a bill being created, and BillNo < 0 never matches, so ties on
-        // the same date are resolved by exclusion below rather than ordering - acceptable for now.
-        if (excludingPurchaseBillId.HasValue)
-            priorBillsQuery = priorBillsQuery.Where(p => p.PurchaseBillId != excludingPurchaseBillId.Value);
-
-        var cumulativeBefore = await priorBillsQuery.SumAsync(p => (decimal?)p.GrossAmount) ?? 0;
-
-        var newCumulative = cumulativeBefore + thisGrossAmount;
-        var taxableExcess = Math.Max(0, newCumulative - Math.Max(cumulativeBefore, threshold));
-        var tdsAmount = Math.Round(taxableExcess * rate / 100, 2);
-
-        return (rate, cumulativeBefore, taxableExcess, tdsAmount);
     }
 
     private static async Task AddItemsAndLotsAsync(FruitAccountingContext context, PurchaseBill bill, PurchaseBillInput input)

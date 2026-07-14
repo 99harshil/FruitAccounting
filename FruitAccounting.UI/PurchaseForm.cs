@@ -140,9 +140,13 @@ namespace FruitAccounting.UI
         {
             if (!((RadioButton)sender).Checked) return;
 
-            bool isTradingOrDirect = rbTrading.Checked || rbDirect.Checked;
-            foreach (var box in new[] { txtCommissionPct, txtFreightRate, txtLabourRate, txtVatavPct, txtMarketFeePct })
-                box.Enabled = !isTradingOrDirect && btnSave!.Enabled;
+            bool isDirect = rbDirect.Checked;
+            foreach (var box in new[]
+            {
+                txtCommissionPct, txtFreightRate, txtLabourRate, txtVatavPct, txtMarketFeePct,
+                txtCommissionAmt, txtFreightAmt, txtLabourAmt, txtVatavAmt, txtMarketFeeAmt
+            })
+                box.Enabled = !isDirect && btnSave!.Enabled;
 
             await RecalculateFooterAsync();
         }
@@ -186,6 +190,16 @@ namespace FruitAccounting.UI
             txtLabourRate.Text = (p.LabourRate ?? 0).ToString(CultureInfo.InvariantCulture);
             txtVatavPct.Text = (p.VatavPct ?? 0).ToString(CultureInfo.InvariantCulture);
             txtMarketFeePct.Text = (p.MarketFeePct ?? 0).ToString(CultureInfo.InvariantCulture);
+
+            // Seed the amount boxes from what was actually saved, so that if the %/rate was 0
+            // (a manually-typed amount was used instead) RecalculateFooterAsync below has the
+            // right manual value to pick up rather than a stale "0".
+            txtCommissionAmt.Text = p.CommissionAmount.ToString("N2", CultureInfo.InvariantCulture);
+            txtFreightAmt.Text = (p.Freight ?? 0).ToString("N2", CultureInfo.InvariantCulture);
+            txtLabourAmt.Text = (p.Labour ?? 0).ToString("N2", CultureInfo.InvariantCulture);
+            txtVatavAmt.Text = (p.Vatav ?? 0).ToString("N2", CultureInfo.InvariantCulture);
+            txtMarketFeeAmt.Text = (p.MarketFee ?? 0).ToString("N2", CultureInfo.InvariantCulture);
+
             txtPostage.Text = (p.Postage ?? 0).ToString(CultureInfo.InvariantCulture);
             txtPackingMaterial.Text = (p.PackingMaterial ?? 0).ToString(CultureInfo.InvariantCulture);
             txtColdStore.Text = (p.ColdStore ?? 0).ToString(CultureInfo.InvariantCulture);
@@ -233,6 +247,11 @@ namespace FruitAccounting.UI
             txtLabourRate.Text = "0";
             txtVatavPct.Text = "0";
             txtMarketFeePct.Text = "0";
+            txtCommissionAmt.Text = "0";
+            txtFreightAmt.Text = "0";
+            txtLabourAmt.Text = "0";
+            txtVatavAmt.Text = "0";
+            txtMarketFeeAmt.Text = "0";
             txtPostage.Text = "10";
             txtPackingMaterial.Text = "0";
             txtColdStore.Text = "0";
@@ -267,27 +286,41 @@ namespace FruitAccounting.UI
                 return;
 
             if (e.ColumnIndex == colQty.Index || e.ColumnIndex == colWeight.Index || e.ColumnIndex == colRate.Index)
-            {
-                var row = dgvItems.Rows[e.RowIndex];
-                decimal.TryParse(row.Cells[colQty.Index].Value?.ToString(), out var qty);
-                decimal.TryParse(row.Cells[colWeight.Index].Value?.ToString(), out var weight);
-                decimal.TryParse(row.Cells[colRate.Index].Value?.ToString(), out var rate);
-
-                // If weight is present, amount is weight x rate (qty is still required alongside it);
-                // otherwise amount is qty x rate.
-                var amount = (weight != 0 ? weight : qty) * rate;
-                _suppressGridEvents = true;
-                row.Cells[colAmount.Index].Value = amount == 0 ? "" : amount.ToString("N2", CultureInfo.InvariantCulture);
-                _suppressGridEvents = false;
-
                 _ = RecalculateFooterAsync();
-            }
         }
 
         private void dgvItems_RowsRemoved(object sender, DataGridViewRowsRemovedEventArgs e) => _ = RecalculateFooterAsync();
 
+        // W/O Commission has no separate commission-income leg - the % is instead a straight
+        // reduction on what's paid for the goods, so it's baked into each line's Amount (and
+        // therefore into Gross Amount) directly rather than deducted once at the footer.
+        private void RecalculateItemAmounts()
+        {
+            bool isWithoutCommission = rbWithoutCommission.Checked;
+            decimal.TryParse(txtCommissionPct.Text, out var commissionPct);
+
+            _suppressGridEvents = true;
+            foreach (DataGridViewRow row in dgvItems.Rows)
+            {
+                if (row.IsNewRow) continue;
+
+                decimal.TryParse(row.Cells[colQty.Index].Value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var qty);
+                decimal.TryParse(row.Cells[colWeight.Index].Value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var weight);
+                decimal.TryParse(row.Cells[colRate.Index].Value?.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out var rate);
+
+                // If weight is present, amount is weight x rate (qty is still required alongside it);
+                // otherwise amount is qty x rate.
+                var raw = (weight != 0 ? weight : qty) * rate;
+                var amount = isWithoutCommission ? raw - Math.Round(raw * commissionPct / 100, 2) : raw;
+                row.Cells[colAmount.Index].Value = amount == 0 ? "" : amount.ToString("N2", CultureInfo.InvariantCulture);
+            }
+            _suppressGridEvents = false;
+        }
+
         private async Task RecalculateFooterAsync()
         {
+            RecalculateItemAmounts();
+
             decimal gross = 0, totalQty = 0, totalWeight = 0;
             foreach (DataGridViewRow row in dgvItems.Rows)
             {
@@ -302,10 +335,11 @@ namespace FruitAccounting.UI
             txtTotalQty.Text = totalQty.ToString("N2", CultureInfo.InvariantCulture);
             txtTotalWeight.Text = totalWeight.ToString("N2", CultureInfo.InvariantCulture);
 
-            bool isTradingOrDirect = rbTrading.Checked || rbDirect.Checked;
+            bool isDirect = rbDirect.Checked;
+            bool isWithoutCommission = rbWithoutCommission.Checked;
 
             decimal commissionAmt = 0, freightAmt = 0, labourAmt = 0, vatavAmt = 0, marketFeeAmt = 0;
-            if (!isTradingOrDirect)
+            if (!isDirect)
             {
                 decimal.TryParse(txtCommissionPct.Text, out var commissionPct);
                 decimal.TryParse(txtFreightRate.Text, out var freightRate);
@@ -313,33 +347,47 @@ namespace FruitAccounting.UI
                 decimal.TryParse(txtVatavPct.Text, out var vatavPct);
                 decimal.TryParse(txtMarketFeePct.Text, out var marketFeePct);
 
-                commissionAmt = Math.Round(gross * commissionPct / 100, 2);
-                freightAmt = Math.Round(totalQty * freightRate, 2);
-                labourAmt = Math.Round(totalQty * labourRate, 2);
-                vatavAmt = Math.Round(gross * vatavPct / 100, 2);
-                marketFeeAmt = Math.Round(gross * marketFeePct / 100, 2);
+                // W/O Commission already had commission deducted per item line by
+                // RecalculateItemAmounts (baked into gross above) - don't deduct it again here.
+                // For every other pair: if no %/rate is entered, take whatever the user typed
+                // directly into the amount box instead of auto-computing it as zero.
+                if (isWithoutCommission)
+                    commissionAmt = 0;
+                else if (commissionPct > 0)
+                    commissionAmt = Math.Round(gross * commissionPct / 100, 2);
+                else
+                    commissionAmt = ParseManualAmount(txtCommissionAmt);
+
+                freightAmt = freightRate > 0 ? Math.Round(totalQty * freightRate, 2) : ParseManualAmount(txtFreightAmt);
+                labourAmt = labourRate > 0 ? Math.Round(totalQty * labourRate, 2) : ParseManualAmount(txtLabourAmt);
+                vatavAmt = vatavPct > 0 ? Math.Round(gross * vatavPct / 100, 2) : ParseManualAmount(txtVatavAmt);
+                marketFeeAmt = marketFeePct > 0 ? Math.Round(gross * marketFeePct / 100, 2) : ParseManualAmount(txtMarketFeeAmt);
             }
 
-            // W/O Commission still deducts commission (same math as WithCommission) - only the
-            // on-screen amount stays hidden, matching what the user asked for.
-            txtCommissionAmt.Text = rbWithoutCommission.Checked
-                ? ""
-                : commissionAmt.ToString("N2", CultureInfo.InvariantCulture);
+            // W/O Commission's deduction is already folded into each item's Amount (and so into
+            // Gross above) - the Commission box itself stays blank since there's no separate
+            // commission-income leg in this mode, just a lower effective purchase price.
+            // Otherwise, only overwrite the amount box when it was auto-computed from a %/rate -
+            // when the user is manually typing a value in (no %/rate entered), leave their input
+            // alone rather than reformatting it out from under them on every keystroke.
+            if (isWithoutCommission)
+                txtCommissionAmt.Text = "";
+            else if (decimal.TryParse(txtCommissionPct.Text, out var cp) && cp > 0)
+                txtCommissionAmt.Text = commissionAmt.ToString("N2", CultureInfo.InvariantCulture);
 
-            // Only W/O Commission moves Commission's effect into the Gross display - since its
-            // own amount box is hidden there, this is where its deduction becomes visible instead.
-            // WithCommission shows Commission directly, so Gross stays the true raw total there
-            // (matches real historical data, where Gross was never reduced, only Net Amount was).
-            // The underlying GrossAmount posted to the ledger (Purchase Account debit) always
-            // stays the true raw total regardless - this is a display-only figure.
-            txtGrossTotal.Text = rbWithoutCommission.Checked
-                ? (gross - commissionAmt).ToString("N2", CultureInfo.InvariantCulture)
-                : gross.ToString("N2", CultureInfo.InvariantCulture);
+            // Gross Total is always just the summed item Amounts - for W/O Commission those
+            // Amounts are already net of commission, so Gross itself becomes "whatever total
+            // the items add up to" per-item, not a separate footer-level subtraction.
+            txtGrossTotal.Text = gross.ToString("N2", CultureInfo.InvariantCulture);
 
-            txtFreightAmt.Text = freightAmt.ToString("N2", CultureInfo.InvariantCulture);
-            txtLabourAmt.Text = labourAmt.ToString("N2", CultureInfo.InvariantCulture);
-            txtVatavAmt.Text = vatavAmt.ToString("N2", CultureInfo.InvariantCulture);
-            txtMarketFeeAmt.Text = marketFeeAmt.ToString("N2", CultureInfo.InvariantCulture);
+            if (decimal.TryParse(txtFreightRate.Text, out var fr) && fr > 0)
+                txtFreightAmt.Text = freightAmt.ToString("N2", CultureInfo.InvariantCulture);
+            if (decimal.TryParse(txtLabourRate.Text, out var lr) && lr > 0)
+                txtLabourAmt.Text = labourAmt.ToString("N2", CultureInfo.InvariantCulture);
+            if (decimal.TryParse(txtVatavPct.Text, out var vp) && vp > 0)
+                txtVatavAmt.Text = vatavAmt.ToString("N2", CultureInfo.InvariantCulture);
+            if (decimal.TryParse(txtMarketFeePct.Text, out var mp) && mp > 0)
+                txtMarketFeeAmt.Text = marketFeeAmt.ToString("N2", CultureInfo.InvariantCulture);
 
             decimal.TryParse(txtPostage.Text, out var postage);
             decimal.TryParse(txtPackingMaterial.Text, out var packingMaterial);
@@ -349,7 +397,7 @@ namespace FruitAccounting.UI
             decimal.TryParse(txtOtherDeduction.Text, out var otherDeduction);
 
             decimal tdsAmt = 0;
-            if (!isTradingOrDirect && cmbSupplierName.SelectedIndex >= 0 && gross > 0)
+            if (!isDirect && cmbSupplierName.SelectedIndex >= 0 && gross > 0)
             {
                 var supplierId = _accounts[cmbSupplierName.SelectedIndex].AccountId;
                 var excludingId = _isAddMode || _currentIndex < 0 ? (long?)null : _dataList[_currentIndex].PurchaseBillId;
@@ -363,10 +411,10 @@ namespace FruitAccounting.UI
             }
             txtTdsAmt.Text = tdsAmt.ToString("N2", CultureInfo.InvariantCulture);
 
-            var totalExpense = isTradingOrDirect ? 0 : freightAmt + labourAmt + postage + packingMaterial + coldStore + ddCharge + inam + otherDeduction + marketFeeAmt;
+            var totalExpense = isDirect ? 0 : freightAmt + labourAmt + postage + packingMaterial + coldStore + ddCharge + inam + otherDeduction + marketFeeAmt;
             txtTotalExpense.Text = totalExpense.ToString("N2", CultureInfo.InvariantCulture);
 
-            var netAmount = isTradingOrDirect
+            var netAmount = isDirect
                 ? gross
                 : gross - commissionAmt - marketFeeAmt - freightAmt - labourAmt - postage - packingMaterial - coldStore - vatavAmt - ddCharge - inam - otherDeduction - tdsAmt;
             txtNetAmount.Text = netAmount.ToString("N2", CultureInfo.InvariantCulture);
@@ -441,6 +489,11 @@ namespace FruitAccounting.UI
                 MarketFeePct = ParseDecimal(txtMarketFeePct.Text),
                 FreightRate = ParseDecimal(txtFreightRate.Text),
                 LabourRate = ParseDecimal(txtLabourRate.Text),
+                CommissionAmt = ParseDecimal(txtCommissionAmt.Text),
+                MarketFeeAmt = ParseDecimal(txtMarketFeeAmt.Text),
+                FreightAmt = ParseDecimal(txtFreightAmt.Text),
+                LabourAmt = ParseDecimal(txtLabourAmt.Text),
+                VatavAmt = ParseDecimal(txtVatavAmt.Text),
                 Postage = ParseDecimal(txtPostage.Text),
                 PackingMaterial = ParseDecimal(txtPackingMaterial.Text),
                 ColdStore = ParseDecimal(txtColdStore.Text),
@@ -499,6 +552,9 @@ namespace FruitAccounting.UI
 
         private static decimal ParseDecimal(string text) => decimal.TryParse(text, out var v) ? v : 0;
 
+        private static decimal ParseManualAmount(TextBox box) =>
+            decimal.TryParse(box.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out var v) ? v : 0;
+
         protected override async Task<bool> DeleteRecordAsync()
         {
             var bill = _dataList[_currentIndex];
@@ -517,6 +573,7 @@ namespace FruitAccounting.UI
                 cmbSupplierCode, cmbSupplierName, btnNewSupplier, txtMark, txtTruckNo, txtDeliveryPerson,
                 cmbAmanatParty, cmbCrateParty,
                 txtCommissionPct, txtFreightRate, txtLabourRate, txtVatavPct, txtMarketFeePct,
+                txtCommissionAmt, txtFreightAmt, txtLabourAmt, txtVatavAmt, txtMarketFeeAmt,
                 txtPostage, txtPackingMaterial, txtColdStore, txtDdCharge, txtInam, txtOtherDeduction, txtRemarks
             };
 
@@ -533,9 +590,13 @@ namespace FruitAccounting.UI
 
             if (isEditing)
             {
-                bool isTradingOrDirect = rbTrading.Checked || rbDirect.Checked;
-                foreach (var box in new[] { txtCommissionPct, txtFreightRate, txtLabourRate, txtVatavPct, txtMarketFeePct })
-                    box.Enabled = !isTradingOrDirect;
+                bool isDirect = rbDirect.Checked;
+                foreach (var box in new[]
+                {
+                    txtCommissionPct, txtFreightRate, txtLabourRate, txtVatavPct, txtMarketFeePct,
+                    txtCommissionAmt, txtFreightAmt, txtLabourAmt, txtVatavAmt, txtMarketFeeAmt
+                })
+                    box.Enabled = !isDirect;
             }
         }
 
