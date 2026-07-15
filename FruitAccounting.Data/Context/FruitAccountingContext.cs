@@ -635,6 +635,9 @@ public partial class FruitAccountingContext : DbContext
             entity.Property(e => e.ApmcLicenceNo)
                 .HasMaxLength(30)
                 .HasColumnName("apmc_licence_no");
+            entity.Property(e => e.ApmcPct)
+                .HasPrecision(5, 3)
+                .HasColumnName("apmc_pct");
             entity.Property(e => e.BankAccountNo)
                 .HasMaxLength(30)
                 .HasColumnName("bank_account_no");
@@ -2017,6 +2020,8 @@ public partial class FruitAccountingContext : DbContext
 
             entity.HasIndex(e => e.LotId, "idx_sales_lot");
 
+            entity.HasIndex(e => new { e.FinancialYearId, e.InvNo }, "idx_sales_invno");
+
             entity.Property(e => e.SaleId)
                 .UseIdentityAlwaysColumn()
                 .HasColumnName("sale_id");
@@ -2039,6 +2044,13 @@ public partial class FruitAccountingContext : DbContext
                 .HasPrecision(14, 2)
                 .HasDefaultValueSql("0")
                 .HasColumnName("freight");
+            entity.Property(e => e.InvNo).HasColumnName("inv_no");
+            entity.Property(e => e.VehNo)
+                .HasMaxLength(20)
+                .HasColumnName("veh_no");
+            entity.Property(e => e.NetAmount)
+                .HasPrecision(14, 2)
+                .HasColumnName("net_amount");
             entity.Property(e => e.ItemId).HasColumnName("item_id");
             entity.Property(e => e.Labour)
                 .HasPrecision(14, 2)

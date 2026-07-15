@@ -62,6 +62,8 @@ internal static class Program
         services.AddScoped<LotService>();
         services.AddScoped<Tds194QService>();
         services.AddScoped<PurchaseService>();
+        services.AddScoped<SalesService>();
+        services.AddScoped<CompanyService>();
         services.AddScoped<UserPreferencesService>();
         using var provider = services.BuildServiceProvider();
 
@@ -184,6 +186,24 @@ internal static class Program
                                         provider.GetRequiredService<ItemService>(),
                                         provider.GetRequiredService<LotService>(),
                                         companyId, financialYearId.Value, null).ShowDialog()));
+            menu.Add(("Sales", () => new SalesForm(
+                                        provider.GetRequiredService<SalesService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        provider.GetRequiredService<CompanyService>(),
+                                        companyId, financialYearId.Value, null).ShowDialog()));
+            menu.Add(("Stock", () => new StockForm(
+                                        provider.GetRequiredService<LotService>(),
+                                        provider.GetRequiredService<SalesService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        provider.GetRequiredService<CompanyService>(),
+                                        companyId, financialYearId.Value, null).ShowDialog()));
+            menu.Add(("Company Information", () => new CompanyInfoForm(
+                                        provider.GetRequiredService<CompanyService>(),
+                                        companyId).ShowDialog()));
         }
 
         while (true)

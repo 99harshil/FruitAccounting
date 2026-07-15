@@ -271,7 +271,48 @@ namespace FruitAccounting.UI
 
         private void dgvItems_DefaultValuesNeeded(object sender, DataGridViewRowEventArgs e)
         {
-            e.Row.Cells[colLotNo.Index].Value = _nextLotNo.ToString();
+            // Lot No. is deliberately NOT assigned here - assigning it the instant a blank new row
+            // appears (before the user has even touched Item/Qty/Rate) was too eager. It's assigned
+            // instead in dgvItems_CellEnter, the moment focus actually reaches the Lot No. cell.
+        }
+
+        private void dgvItems_CellEnter(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.ColumnIndex != colLotNo.Index || e.RowIndex < 0)
+                return;
+
+            var cell = dgvItems.Rows[e.RowIndex].Cells[colLotNo.Index];
+            if (cell.Value != null && !string.IsNullOrEmpty(cell.Value.ToString()))
+                return; // already assigned (an existing/loaded row) - don't reassign
+
+            // Lot No. is fully system-assigned, never typed - each row gets the next free number
+            // and the counter advances so a second row in the same bill doesn't collide with the
+            // first. Reusing an existing Lot No. by hand was the root cause of a real bug (Sales
+            // couldn't tell which of two bills' item a shared Lot No. actually belonged to).
+            cell.Value = _nextLotNo.ToString();
+            _nextLotNo++;
+        }
+
+        private void dgvItems_KeyDown(object sender, KeyEventArgs e)
+        {
+            // Read-only columns (Lot No., Amount) should stay read-only even when a cell is merely
+            // selected (not being edited) - DataGridView otherwise lets Delete/Backspace clear a
+            // selected read-only cell's displayed value.
+            if ((e.KeyCode == Keys.Delete || e.KeyCode == Keys.Back) &&
+                dgvItems.CurrentCell != null && dgvItems.CurrentCell.ReadOnly)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+            }
+
+            // Escape while adding lines - once there's nothing more to enter, jump straight to
+            // Save instead of having to reach for the mouse.
+            if (e.KeyCode == Keys.Escape)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                btnSave.Focus();
+            }
         }
 
         private void dgvItems_CurrentCellDirtyStateChanged(object sender, EventArgs e)
@@ -607,7 +648,14 @@ namespace FruitAccounting.UI
             OnAdd();
         }
 
-        private void btnUpdate_Click(object sender, EventArgs e) => OnUpdate();
+        private async void btnUpdate_Click(object sender, EventArgs e)
+        {
+            // Existing rows keep their own already-saved Lot No.s (DefaultValuesNeeded only fires
+            // for brand-new rows) - this just makes sure any NEW row added while editing this bill
+            // starts from the true current max, not a possibly-stale value from an earlier Add.
+            _nextLotNo = await _lotService.GetNextLotNoAsync(_financialYearId);
+            OnUpdate();
+        }
 
         private void btnSave_Click(object sender, EventArgs e) => OnSave();
 

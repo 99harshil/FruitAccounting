@@ -33,6 +33,8 @@ public partial class Company
 
     public string? BankIfsc { get; set; }
 
+    public decimal? ApmcPct { get; set; }
+
     public byte[]? Logo { get; set; }
 
     public bool IsActive { get; set; } = true;

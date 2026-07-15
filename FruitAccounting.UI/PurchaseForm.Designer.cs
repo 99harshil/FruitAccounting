@@ -412,6 +412,8 @@ namespace FruitAccounting.UI
             dgvItems.CurrentCellDirtyStateChanged += dgvItems_CurrentCellDirtyStateChanged;
             dgvItems.RowsRemoved += dgvItems_RowsRemoved;
             dgvItems.DefaultValuesNeeded += dgvItems_DefaultValuesNeeded;
+            dgvItems.KeyDown += dgvItems_KeyDown;
+            dgvItems.CellEnter += dgvItems_CellEnter;
             //
             // colItem
             //
@@ -456,6 +458,7 @@ namespace FruitAccounting.UI
             //
             colLotNo.HeaderText = "Lot No.";
             colLotNo.Name = "colLotNo";
+            colLotNo.ReadOnly = true;
             colLotNo.Width = 70;
             //
             // colCrateInfo

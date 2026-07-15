@@ -9,6 +9,10 @@ public partial class Sale
 
     public long FinancialYearId { get; set; }
 
+    public int InvNo { get; set; }
+
+    public string? VehNo { get; set; }
+
     public DateOnly SaleDate { get; set; }
 
     public long LotId { get; set; }
@@ -48,6 +52,8 @@ public partial class Sale
     public decimal? DeliveredQty { get; set; }
 
     public string? DeliveredTo { get; set; }
+
+    public decimal NetAmount { get; set; }
 
     public string? Remarks { get; set; }
 

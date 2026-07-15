@@ -145,6 +145,7 @@ namespace FruitAccounting.UI
             var calcItem = new ToolStripMenuItem("Calculator", null, (s, e) => ShowCalculator());
             calcItem.ShortcutKeys = Keys.F8;
             menuItemUtility.DropDownItems.Add(calcItem);
+            menuItemUtility.DropDownItems.Add("Company Information", null, (s, e) => ShowForm("CompanyInfo"));
             menuItemUtility.DropDownItems.Add("Company Change", null, (s, e) => ShowForm("CompanyChange"));
             menuItemUtility.DropDownItems.Add("New Year", null, (s, e) => ShowForm("NewYear"));
             menuItemUtility.DropDownItems.Add("Data Check", null, (s, e) => ShowForm("DataCheck"));
@@ -291,6 +292,11 @@ namespace FruitAccounting.UI
                     if (userService != null && contextFactory != null)
                         newForm = new CompanyRightsForm(userService, contextFactory);
                     break;
+                case "CompanyInfo":
+                    var companyService = Program.ServiceProvider?.GetService(typeof(CompanyService)) as CompanyService;
+                    if (companyService != null)
+                        newForm = new CompanyInfoForm(companyService, _company.CompanyId);
+                    break;
                 // Master forms
                 case "MainGroup":
                     var accountGroupService = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
@@ -364,10 +370,27 @@ namespace FruitAccounting.UI
                             itemServiceForPurchase, lotServiceForPurchase, _company.CompanyId, _financialYear.FinancialYearId, _loggedInUser.UserId);
                     break;
                 case "Sales":
-                    newForm = new Form { Text = "Sales Entry", MdiParent = this };
+                    var salesService = Program.ServiceProvider?.GetService(typeof(SalesService)) as SalesService;
+                    var accountServiceForSales = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var accountGroupServiceForSales = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceForSales = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    var companyServiceForSales = Program.ServiceProvider?.GetService(typeof(CompanyService)) as CompanyService;
+                    if (salesService != null && accountServiceForSales != null && accountGroupServiceForSales != null
+                        && regionServiceForSales != null && companyServiceForSales != null)
+                        newForm = new SalesForm(salesService, accountServiceForSales, accountGroupServiceForSales, regionServiceForSales,
+                            companyServiceForSales, _company.CompanyId, _financialYear.FinancialYearId, _loggedInUser.UserId);
                     break;
                 case "Stock":
-                    newForm = new Form { Text = "Stock Report", MdiParent = this };
+                    var lotServiceForStock = Program.ServiceProvider?.GetService(typeof(LotService)) as LotService;
+                    var salesServiceForStock = Program.ServiceProvider?.GetService(typeof(SalesService)) as SalesService;
+                    var accountServiceForStock = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var accountGroupServiceForStock = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    var regionServiceForStock = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    var companyServiceForStock = Program.ServiceProvider?.GetService(typeof(CompanyService)) as CompanyService;
+                    if (lotServiceForStock != null && salesServiceForStock != null && accountServiceForStock != null
+                        && accountGroupServiceForStock != null && regionServiceForStock != null && companyServiceForStock != null)
+                        newForm = new StockForm(lotServiceForStock, salesServiceForStock, accountServiceForStock, accountGroupServiceForStock,
+                            regionServiceForStock, companyServiceForStock, _company.CompanyId, _financialYear.FinancialYearId, _loggedInUser.UserId);
                     break;
                 case "Chithi":
                     newForm = new Form { Text = "Chithi Report", MdiParent = this };
