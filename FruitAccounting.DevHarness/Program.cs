@@ -59,6 +59,7 @@ internal static class Program
         services.AddScoped<TdsPaymentService>();
         services.AddScoped<BankReconciliationService>();
         services.AddScoped<JournalService>();
+        services.AddScoped<LedgerService>();
         services.AddScoped<LotService>();
         services.AddScoped<Tds194QService>();
         services.AddScoped<PurchaseService>();
@@ -204,6 +205,10 @@ internal static class Program
             menu.Add(("Company Information", () => new CompanyInfoForm(
                                         provider.GetRequiredService<CompanyService>(),
                                         companyId).ShowDialog()));
+            menu.Add(("Ledger (Selected)", () => new LedgerReportForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
         }
 
         while (true)

@@ -455,6 +455,7 @@ public class SalesService
                 VoucherType = VoucherType.SalesBill,
                 Narration = $"Sales #{invNo}",
                 ContraAccountId = salesAccountId.Value,
+                Quantity = sale.Quantity,
                 CreatedAt = DateTime.UtcNow
             });
 
