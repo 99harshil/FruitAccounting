@@ -112,6 +112,19 @@ namespace FruitAccounting.UI
             cashRegisterSubMenu.DropDownItems.Add("User Wise", null, (s, e) => ShowForm("CashRegisterUserWise"));
             accountReportsSubMenu.DropDownItems.Add(cashRegisterSubMenu);
             accountReportsSubMenu.DropDownItems.Add("Journal Register", null, (s, e) => ShowForm("JournalRegister"));
+            accountReportsSubMenu.DropDownItems.Add("Ledger", null, (s, e) => ShowForm("Ledger"));
+            var ledgerSubMenu = new ToolStripMenuItem("Ledger");
+            ledgerSubMenu.DropDownItems.Add("All", null, (s, e) => ShowForm("LedgerAll"));
+            ledgerSubMenu.DropDownItems.Add("Selected", null, (s, e) => ShowForm("LedgerSelected"));
+            ledgerSubMenu.DropDownItems.Add("Group Wise", null, (s, e) => ShowForm("LedgerGroupWise"));
+            ledgerSubMenu.DropDownItems.Add("Daily", null, (s, e) => ShowForm("LedgerDaily"));
+            ledgerSubMenu.DropDownItems.Add("Monthly", null, (s, e) => ShowForm("LedgerMonthly"));
+            ledgerSubMenu.DropDownItems.Add("Weekly", null, (s, e) => ShowForm("LedgerWeekly"));
+            ledgerSubMenu.DropDownItems.Add("Party Group Wise", null, (s, e) => ShowForm("LedgerPartyGroupWise"));
+            var ledgerWeeklySubMenu = new ToolStripMenuItem("Ledger Weekly");
+            ledgerWeeklySubMenu.DropDownItems.Add("All", null, (s, e) => ShowForm("LedgerWeeklyAll"));
+            ledgerWeeklySubMenu.DropDownItems.Add("Selected", null, (s, e) => ShowForm("LedgerWeeklySelected"));
+            ledgerWeeklySubMenu.DropDownItems.Add("Group Wise", null, (s, e) => ShowForm("LedgerWeeklyGroupWise"));
             menuItemAccount.DropDownItems.Add(accountReportsSubMenu);
 
             // Domestic
