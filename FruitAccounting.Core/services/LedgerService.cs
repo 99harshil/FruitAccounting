@@ -59,6 +59,24 @@ public class LedgerService
         public decimal ClosingBalance { get; set; }
     }
 
+    /// Ledger for several accounts at once (Account -> Reports -> Ledger -> All / Group Wise) -
+    /// one full LedgerResult per account, in the order accountIds was given, skipping accounts
+    /// with no activity in the period (no rows and a zero opening balance). Runs GetLedgerAsync
+    /// per account rather than a single batched query - simplest correct approach; revisit if the
+    /// "All accounts" case becomes a performance problem once this is wired to real report output.
+    public async Task<List<LedgerResult>> GetLedgerForAccountsAsync(IEnumerable<long> accountIds,
+        long financialYearId, DateOnly fromDate, DateOnly toDate)
+    {
+        var results = new List<LedgerResult>();
+        foreach (var accountId in accountIds)
+        {
+            var result = await GetLedgerAsync(accountId, financialYearId, fromDate, toDate);
+            if (result.Rows.Count > 0 || result.OpeningBalance != 0)
+                results.Add(result);
+        }
+        return results;
+    }
+
     /// <param name="voucherTypeFilter">
     /// When set, only rows of this VoucherType are returned (and counted in TotalDebit/TotalCredit) -
     /// e.g. "show me just the Purchase entries on this party's ledger". The Balance column on every

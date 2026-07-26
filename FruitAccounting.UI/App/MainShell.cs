@@ -471,6 +471,21 @@ namespace FruitAccounting.UI
                         newForm = new LedgerReportForm(ledgerService, accountServiceForLedger,
                             _company.CompanyId, _financialYear.FinancialYearId, _financialYear, _loggedInUser.UserId);
                     break;
+                case "LedgerAll":
+                    ledgerService = Program.ServiceProvider?.GetService(typeof(LedgerService)) as LedgerService;
+                    accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    if (ledgerService != null && accountServiceForLedger != null)
+                        newForm = new LedgerAllForm(ledgerService, accountServiceForLedger,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
+                case "LedgerGroupWise":
+                    ledgerService = Program.ServiceProvider?.GetService(typeof(LedgerService)) as LedgerService;
+                    accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var accountGroupServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    if (ledgerService != null && accountServiceForLedger != null && accountGroupServiceForLedger != null)
+                        newForm = new LedgerGroupWiseForm(ledgerService, accountServiceForLedger, accountGroupServiceForLedger,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;
                     var accountServiceBank = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;

@@ -214,6 +214,15 @@ internal static class Program
                                         provider.GetRequiredService<LedgerService>(),
                                         provider.GetRequiredService<AccountService>(),
                                         companyId, financialYearId.Value, financialYear!, user?.UserId).ShowDialog()));
+            menu.Add(("Ledger (All)", () => new LedgerAllForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Ledger (Group Wise)", () => new LedgerGroupWiseForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
         }
 
         while (true)
