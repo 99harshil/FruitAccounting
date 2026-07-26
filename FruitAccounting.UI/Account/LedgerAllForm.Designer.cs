@@ -20,6 +20,7 @@ namespace FruitAccounting.UI
             lblPeriod = new Label();
             dtpFromDate = new DateTimePicker();
             dtpToDate = new DateTimePicker();
+            chkWeekTotal = new CheckBox();
             btnOk = new Button();
             btnClose = new Button();
             btnWhatsapp = new Button();
@@ -52,6 +53,16 @@ namespace FruitAccounting.UI
             dtpToDate.Name = "dtpToDate";
             dtpToDate.Size = new Size(135, 23);
             dtpToDate.TabIndex = 2;
+            //
+            // chkWeekTotal
+            //
+            chkWeekTotal.AutoSize = true;
+            chkWeekTotal.Location = new Point(20, 75);
+            chkWeekTotal.Name = "chkWeekTotal";
+            chkWeekTotal.Size = new Size(90, 19);
+            chkWeekTotal.TabIndex = 6;
+            chkWeekTotal.Text = "Week Total";
+            chkWeekTotal.UseVisualStyleBackColor = true;
             //
             // btnOk
             //
@@ -101,6 +112,7 @@ namespace FruitAccounting.UI
             Controls.Add(btnWhatsapp);
             Controls.Add(btnClose);
             Controls.Add(btnOk);
+            Controls.Add(chkWeekTotal);
             Controls.Add(dtpToDate);
             Controls.Add(dtpFromDate);
             Controls.Add(lblPeriod);
@@ -120,6 +132,7 @@ namespace FruitAccounting.UI
         private Label lblPeriod;
         private DateTimePicker dtpFromDate;
         private DateTimePicker dtpToDate;
+        private CheckBox chkWeekTotal;
         private Button btnOk;
         private Button btnClose;
         private Button btnWhatsapp;

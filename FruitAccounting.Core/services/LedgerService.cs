@@ -43,6 +43,13 @@ public class LedgerService
         // Receipt/Payment only - which book ('C'ash or 'B'ank) the originating ReceiptForm/PaymentForm
         // instance must be opened in, since those forms are book-type-scoped.
         public char? BookType { get; set; }
+
+        // Set by AggregateByWeek - this row summarizes a whole week rather than one voucher, so
+        // VoucherType/VoucherId/etc. above don't apply. WeekStart/WeekEnd let the UI "drill in" to
+        // that week's daily entries on double-click.
+        public bool IsWeekAggregate { get; set; }
+        public DateOnly? WeekStart { get; set; }
+        public DateOnly? WeekEnd { get; set; }
     }
 
     public class LedgerResult
@@ -209,6 +216,44 @@ public class LedgerService
             TotalCredit = totalCredit,
             ClosingBalance = running
         };
+    }
+
+    /// Collapses daily rows into one row per calendar week (Monday-Sunday) - Debit/Credit summed,
+    /// Balance taken from the last row in that week (already the correct cumulative figure, no
+    /// recomputation needed). Detail shows the week's date range instead of any one day's narration.
+    /// Pure in-memory transform over rows GetLedgerAsync already produced - no extra DB query.
+    public static List<LedgerRow> AggregateByWeek(List<LedgerRow> dailyRows)
+    {
+        var weeks = dailyRows
+            .GroupBy(r => StartOfWeek(r.Date))
+            .OrderBy(g => g.Key);
+
+        var result = new List<LedgerRow>();
+        foreach (var week in weeks)
+        {
+            var weekStart = week.Key;
+            var weekEnd = weekStart.AddDays(6);
+            var last = week.OrderBy(r => r.Date).Last();
+
+            result.Add(new LedgerRow
+            {
+                Date = weekStart,
+                Detail = $"{weekStart:dd/MM/yyyy} - {weekEnd:dd/MM/yyyy}",
+                Debit = week.Sum(r => r.Debit),
+                Credit = week.Sum(r => r.Credit),
+                RunningBalance = last.RunningBalance,
+                IsWeekAggregate = true,
+                WeekStart = weekStart,
+                WeekEnd = weekEnd
+            });
+        }
+        return result;
+    }
+
+    private static DateOnly StartOfWeek(DateOnly date)
+    {
+        int diff = ((int)date.DayOfWeek - (int)DayOfWeek.Monday + 7) % 7;
+        return date.AddDays(-diff);
     }
 
     private static string VoucherCode(VoucherType voucherType, char? bookType) => voucherType switch

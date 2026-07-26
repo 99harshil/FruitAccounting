@@ -16,6 +16,7 @@ namespace FruitAccounting.UI
 
         private List<Account> _accounts = new();
         private bool _suppressAccountSync;
+        private bool _suppressReload;
         private long _loadSeq;
 
         public LedgerReportForm(LedgerService ledgerService, AccountService accountService,
@@ -79,25 +80,39 @@ namespace FruitAccounting.UI
                 : "";
         }
 
-        private async void dtpFromDate_ValueChanged(object sender, EventArgs e) => await LoadLedgerAsync();
+        private async void dtpFromDate_ValueChanged(object sender, EventArgs e)
+        {
+            if (_suppressReload) return;
+            await LoadLedgerAsync();
+        }
 
-        private async void dtpToDate_ValueChanged(object sender, EventArgs e) => await LoadLedgerAsync();
+        private async void dtpToDate_ValueChanged(object sender, EventArgs e)
+        {
+            if (_suppressReload) return;
+            await LoadLedgerAsync();
+        }
 
         // All eight radio buttons share this handler; RadioButton fires CheckedChanged for both the
         // button losing the check and the one gaining it, so only act on the one becoming checked.
         private async void rbViewMode_CheckedChanged(object sender, EventArgs e)
         {
+            if (_suppressReload) return;
             if (sender is RadioButton { Checked: true })
                 await LoadLedgerAsync();
         }
 
-        // Week Total (collapse to one row per week) and Gross Amount (show gross instead of net
-        // settled figures) are UI stubs for now - not yet implemented, matching Print/WhatsApp/
-        // Detail/Chithi/Email in this form. Left visible (matching the legacy screen) rather than
-        // hidden, but wired to reload the normal view instead of silently doing nothing.
-        private async void chkAggregation_CheckedChanged(object sender, EventArgs e)
+        private async void chkWeekTotal_CheckedChanged(object sender, EventArgs e)
         {
-            MessageBox.Show("Week Total / Gross Amount are not implemented yet.", "Ledger");
+            if (_suppressReload) return;
+            await LoadLedgerAsync();
+        }
+
+        // Gross Amount (show gross instead of net settled figures) is still a UI stub - deciding
+        // which alternate figure applies per voucher type is separate work from Week Total.
+        private async void chkGrossAmount_CheckedChanged(object sender, EventArgs e)
+        {
+            if (_suppressReload) return;
+            MessageBox.Show("Gross Amount is not implemented yet.", "Ledger");
             await LoadLedgerAsync();
         }
 
@@ -148,8 +163,9 @@ namespace FruitAccounting.UI
 
             if (!summaryOnly)
             {
+                var displayRows = chkWeekTotal.Checked ? LedgerService.AggregateByWeek(result.Rows) : result.Rows;
                 int sr = 1;
-                foreach (var row in result.Rows)
+                foreach (var row in displayRows)
                 {
                     int rowIndex = dgvLedger.Rows.Add(
                         sr++,
@@ -221,11 +237,24 @@ namespace FruitAccounting.UI
 
         // Double-clicking a transaction row opens the originating voucher screen, preselected to
         // that exact record - not just opened on whatever the newest entry happens to be. Balance/
-        // summary rows (Opening/Grand Total/Balance) have no Tag, so they no-op here.
-        private void dgvLedger_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        // summary rows (Opening/Grand Total/Balance) have no Tag, so they no-op here. Double-
+        // clicking a Week Total row instead "drills in": switches off aggregation and narrows the
+        // period to that week, showing the same daily entries a regular (non-aggregated) ledger would.
+        private async void dgvLedger_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
             if (e.RowIndex < 0) return;
             if (dgvLedger.Rows[e.RowIndex].Tag is not LedgerService.LedgerRow row) return;
+
+            if (row.IsWeekAggregate && row.WeekStart.HasValue && row.WeekEnd.HasValue)
+            {
+                _suppressReload = true;
+                chkWeekTotal.Checked = false;
+                dtpFromDate.Value = row.WeekStart.Value.ToDateTime(TimeOnly.MinValue);
+                dtpToDate.Value = row.WeekEnd.Value.ToDateTime(TimeOnly.MinValue);
+                _suppressReload = false;
+                await LoadLedgerAsync();
+                return;
+            }
 
             switch (row.VoucherType)
             {

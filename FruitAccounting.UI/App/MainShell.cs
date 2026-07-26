@@ -118,13 +118,6 @@ namespace FruitAccounting.UI
             ledgerSubMenu.DropDownItems.Add("Group Wise", null, (s, e) => ShowForm("LedgerGroupWise"));
             ledgerSubMenu.DropDownItems.Add("Daily", null, (s, e) => ShowForm("LedgerDaily"));
             ledgerSubMenu.DropDownItems.Add("Monthly", null, (s, e) => ShowForm("LedgerMonthly"));
-            ledgerSubMenu.DropDownItems.Add("Weekly", null, (s, e) => ShowForm("LedgerWeekly"));
-            ledgerSubMenu.DropDownItems.Add("Party Group Wise", null, (s, e) => ShowForm("LedgerPartyGroupWise"));
-            var ledgerWeeklySubMenu = new ToolStripMenuItem("Ledger Weekly");
-            ledgerWeeklySubMenu.DropDownItems.Add("All", null, (s, e) => ShowForm("LedgerWeeklyAll"));
-            ledgerWeeklySubMenu.DropDownItems.Add("Selected", null, (s, e) => ShowForm("LedgerWeeklySelected"));
-            ledgerWeeklySubMenu.DropDownItems.Add("Group Wise", null, (s, e) => ShowForm("LedgerWeeklyGroupWise"));
-            ledgerSubMenu.DropDownItems.Add(ledgerWeeklySubMenu);
             accountReportsSubMenu.DropDownItems.Add(ledgerSubMenu);
             menuItemAccount.DropDownItems.Add(accountReportsSubMenu);
 
@@ -485,6 +478,20 @@ namespace FruitAccounting.UI
                     if (ledgerService != null && accountServiceForLedger != null && accountGroupServiceForLedger != null)
                         newForm = new LedgerGroupWiseForm(ledgerService, accountServiceForLedger, accountGroupServiceForLedger,
                             _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
+                case "LedgerDaily":
+                    ledgerService = Program.ServiceProvider?.GetService(typeof(LedgerService)) as LedgerService;
+                    accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    if (ledgerService != null && accountServiceForLedger != null)
+                        newForm = new LedgerDailyForm(ledgerService, accountServiceForLedger,
+                            _company.CompanyId, _financialYear.FinancialYearId);
+                    break;
+                case "LedgerMonthly":
+                    ledgerService = Program.ServiceProvider?.GetService(typeof(LedgerService)) as LedgerService;
+                    accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    if (ledgerService != null && accountServiceForLedger != null)
+                        newForm = new LedgerMonthlyForm(ledgerService, accountServiceForLedger,
+                            _company.CompanyId, _financialYear.FinancialYearId);
                     break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;

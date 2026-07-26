@@ -82,7 +82,7 @@ namespace FruitAccounting.UI
                 .OrderBy(a => a.Code).Select(a => a.AccountId).ToList();
 
             new LedgerMultiAccountReportForm(_ledgerService, $"Ledger - Group Wise ({selectedGroup.Name})",
-                accountIds, _financialYearId, fromDate, toDate).ShowDialog();
+                accountIds, _financialYearId, fromDate, toDate, chkWeekTotal.Checked).ShowDialog();
         }
 
         private void btnClose_Click(object sender, EventArgs e) => Close();

@@ -324,7 +324,7 @@ namespace FruitAccounting.UI
             chkWeekTotal.TabIndex = 18;
             chkWeekTotal.Text = "Week Total";
             chkWeekTotal.UseVisualStyleBackColor = true;
-            chkWeekTotal.CheckedChanged += chkAggregation_CheckedChanged;
+            chkWeekTotal.CheckedChanged += chkWeekTotal_CheckedChanged;
             //
             // chkGrossAmount
             //
@@ -335,7 +335,7 @@ namespace FruitAccounting.UI
             chkGrossAmount.TabIndex = 19;
             chkGrossAmount.Text = "Gross Amount";
             chkGrossAmount.UseVisualStyleBackColor = true;
-            chkGrossAmount.CheckedChanged += chkAggregation_CheckedChanged;
+            chkGrossAmount.CheckedChanged += chkGrossAmount_CheckedChanged;
             //
             // btnClose
             //

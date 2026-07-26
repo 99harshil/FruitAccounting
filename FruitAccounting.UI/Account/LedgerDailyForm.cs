@@ -1,30 +1,30 @@
 using FruitAccounting.Core.services;
-using FruitAccounting.Data.Entities;
 
 namespace FruitAccounting.UI
 {
-    public partial class LedgerAllForm : Form
+    // Same flow as LedgerAllForm (walk every non-blocked account, skip ones with no activity) -
+    // only the default period differs: both From and To default to today, so opening the screen
+    // shows "everyone's transactions today" without having to set a range first.
+    public partial class LedgerDailyForm : Form
     {
         private readonly LedgerService _ledgerService;
         private readonly AccountService _accountService;
         private readonly long _companyId;
         private readonly long _financialYearId;
-        private readonly FinancialYear _financialYear;
 
-        public LedgerAllForm(LedgerService ledgerService, AccountService accountService,
-            long companyId, long financialYearId, FinancialYear financialYear)
+        public LedgerDailyForm(LedgerService ledgerService, AccountService accountService,
+            long companyId, long financialYearId)
         {
             InitializeComponent();
             _ledgerService = ledgerService;
             _accountService = accountService;
             _companyId = companyId;
             _financialYearId = financialYearId;
-            _financialYear = financialYear;
         }
 
-        private void LedgerAllForm_Load(object sender, EventArgs e)
+        private void LedgerDailyForm_Load(object sender, EventArgs e)
         {
-            dtpFromDate.Value = _financialYear.StartDate.ToDateTime(TimeOnly.MinValue);
+            dtpFromDate.Value = DateTime.Today;
             dtpToDate.Value = DateTime.Today;
         }
 
@@ -41,8 +41,8 @@ namespace FruitAccounting.UI
             var all = await _accountService.GetAllAccountsAsync(_companyId);
             var accountIds = all.Where(a => !a.IsBlocked).OrderBy(a => a.Code).Select(a => a.AccountId).ToList();
 
-            new LedgerMultiAccountReportForm(_ledgerService, "Ledger - All", accountIds, _financialYearId, fromDate, toDate,
-                chkWeekTotal.Checked).ShowDialog();
+            new LedgerMultiAccountReportForm(_ledgerService, "Ledger - Daily", accountIds, _financialYearId, fromDate, toDate)
+                .ShowDialog();
         }
 
         private void btnClose_Click(object sender, EventArgs e) => Close();

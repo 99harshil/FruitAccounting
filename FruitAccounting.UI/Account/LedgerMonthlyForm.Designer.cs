@@ -1,6 +1,6 @@
 namespace FruitAccounting.UI
 {
-    partial class LedgerGroupWiseForm
+    partial class LedgerMonthlyForm
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -20,9 +20,6 @@ namespace FruitAccounting.UI
             lblPeriod = new Label();
             dtpFromDate = new DateTimePicker();
             dtpToDate = new DateTimePicker();
-            lblGroup = new Label();
-            cmbGroup = new ComboBox();
-            chkWeekTotal = new CheckBox();
             btnOk = new Button();
             btnClose = new Button();
             btnWhatsapp = new Button();
@@ -56,37 +53,6 @@ namespace FruitAccounting.UI
             dtpToDate.Size = new Size(135, 23);
             dtpToDate.TabIndex = 2;
             //
-            // lblGroup
-            //
-            lblGroup.AutoSize = true;
-            lblGroup.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblGroup.Location = new Point(20, 80);
-            lblGroup.Name = "lblGroup";
-            lblGroup.Size = new Size(48, 15);
-            lblGroup.TabIndex = 3;
-            lblGroup.Text = "Group";
-            //
-            // cmbGroup
-            //
-            cmbGroup.BackColor = Color.FromArgb(230, 230, 230);
-            cmbGroup.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbGroup.FlatStyle = FlatStyle.Flat;
-            cmbGroup.FormattingEnabled = true;
-            cmbGroup.Location = new Point(90, 77);
-            cmbGroup.Name = "cmbGroup";
-            cmbGroup.Size = new Size(430, 23);
-            cmbGroup.TabIndex = 4;
-            //
-            // chkWeekTotal
-            //
-            chkWeekTotal.AutoSize = true;
-            chkWeekTotal.Location = new Point(20, 115);
-            chkWeekTotal.Name = "chkWeekTotal";
-            chkWeekTotal.Size = new Size(90, 19);
-            chkWeekTotal.TabIndex = 8;
-            chkWeekTotal.Text = "Week Total";
-            chkWeekTotal.UseVisualStyleBackColor = true;
-            //
             // btnOk
             //
             btnOk.BackColor = Color.LightSteelBlue;
@@ -95,7 +61,7 @@ namespace FruitAccounting.UI
             btnOk.Location = new Point(427, 610);
             btnOk.Name = "btnOk";
             btnOk.Size = new Size(80, 28);
-            btnOk.TabIndex = 5;
+            btnOk.TabIndex = 3;
             btnOk.Text = "OK";
             btnOk.UseVisualStyleBackColor = false;
             btnOk.Click += btnOk_Click;
@@ -108,7 +74,7 @@ namespace FruitAccounting.UI
             btnClose.Location = new Point(525, 610);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(80, 28);
-            btnClose.TabIndex = 6;
+            btnClose.TabIndex = 4;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = false;
             btnClose.Click += btnClose_Click;
@@ -121,12 +87,12 @@ namespace FruitAccounting.UI
             btnWhatsapp.Location = new Point(623, 610);
             btnWhatsapp.Name = "btnWhatsapp";
             btnWhatsapp.Size = new Size(38, 28);
-            btnWhatsapp.TabIndex = 7;
+            btnWhatsapp.TabIndex = 5;
             btnWhatsapp.Text = "\U0001F4AC";
             btnWhatsapp.UseVisualStyleBackColor = false;
             btnWhatsapp.Click += btnWhatsapp_Click;
             //
-            // LedgerGroupWiseForm
+            // LedgerMonthlyForm
             //
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
@@ -135,19 +101,16 @@ namespace FruitAccounting.UI
             Controls.Add(btnWhatsapp);
             Controls.Add(btnClose);
             Controls.Add(btnOk);
-            Controls.Add(chkWeekTotal);
-            Controls.Add(cmbGroup);
-            Controls.Add(lblGroup);
             Controls.Add(dtpToDate);
             Controls.Add(dtpFromDate);
             Controls.Add(lblPeriod);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
-            Name = "LedgerGroupWiseForm";
+            Name = "LedgerMonthlyForm";
             StartPosition = FormStartPosition.CenterScreen;
             Text = "Reports";
-            Load += LedgerGroupWiseForm_Load;
+            Load += LedgerMonthlyForm_Load;
             ResumeLayout(false);
             PerformLayout();
         }
@@ -157,9 +120,6 @@ namespace FruitAccounting.UI
         private Label lblPeriod;
         private DateTimePicker dtpFromDate;
         private DateTimePicker dtpToDate;
-        private Label lblGroup;
-        private ComboBox cmbGroup;
-        private CheckBox chkWeekTotal;
         private Button btnOk;
         private Button btnClose;
         private Button btnWhatsapp;

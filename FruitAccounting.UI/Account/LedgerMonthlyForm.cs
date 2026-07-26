@@ -1,31 +1,36 @@
 using FruitAccounting.Core.services;
-using FruitAccounting.Data.Entities;
 
 namespace FruitAccounting.UI
 {
-    public partial class LedgerAllForm : Form
+    // Same flow as LedgerAllForm - only the default period differs: defaults to the last fully
+    // completed calendar month (not the current, still-partial one), e.g. opened on 26/07/2026
+    // defaults to 01/06/2026 - 30/06/2026, the standard "last closed month" accounting convention.
+    public partial class LedgerMonthlyForm : Form
     {
         private readonly LedgerService _ledgerService;
         private readonly AccountService _accountService;
         private readonly long _companyId;
         private readonly long _financialYearId;
-        private readonly FinancialYear _financialYear;
 
-        public LedgerAllForm(LedgerService ledgerService, AccountService accountService,
-            long companyId, long financialYearId, FinancialYear financialYear)
+        public LedgerMonthlyForm(LedgerService ledgerService, AccountService accountService,
+            long companyId, long financialYearId)
         {
             InitializeComponent();
             _ledgerService = ledgerService;
             _accountService = accountService;
             _companyId = companyId;
             _financialYearId = financialYearId;
-            _financialYear = financialYear;
         }
 
-        private void LedgerAllForm_Load(object sender, EventArgs e)
+        private void LedgerMonthlyForm_Load(object sender, EventArgs e)
         {
-            dtpFromDate.Value = _financialYear.StartDate.ToDateTime(TimeOnly.MinValue);
-            dtpToDate.Value = DateTime.Today;
+            var today = DateOnly.FromDateTime(DateTime.Today);
+            var firstOfCurrentMonth = new DateOnly(today.Year, today.Month, 1);
+            var lastMonthEnd = firstOfCurrentMonth.AddDays(-1);
+            var lastMonthStart = new DateOnly(lastMonthEnd.Year, lastMonthEnd.Month, 1);
+
+            dtpFromDate.Value = lastMonthStart.ToDateTime(TimeOnly.MinValue);
+            dtpToDate.Value = lastMonthEnd.ToDateTime(TimeOnly.MinValue);
         }
 
         private async void btnOk_Click(object sender, EventArgs e)
@@ -41,8 +46,8 @@ namespace FruitAccounting.UI
             var all = await _accountService.GetAllAccountsAsync(_companyId);
             var accountIds = all.Where(a => !a.IsBlocked).OrderBy(a => a.Code).Select(a => a.AccountId).ToList();
 
-            new LedgerMultiAccountReportForm(_ledgerService, "Ledger - All", accountIds, _financialYearId, fromDate, toDate,
-                chkWeekTotal.Checked).ShowDialog();
+            new LedgerMultiAccountReportForm(_ledgerService, "Ledger - Monthly", accountIds, _financialYearId, fromDate, toDate)
+                .ShowDialog();
         }
 
         private void btnClose_Click(object sender, EventArgs e) => Close();

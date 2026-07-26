@@ -14,9 +14,10 @@ namespace FruitAccounting.UI
         private readonly long _financialYearId;
         private readonly DateOnly _fromDate;
         private readonly DateOnly _toDate;
+        private readonly bool _weekTotal;
 
         public LedgerMultiAccountReportForm(LedgerService ledgerService, string heading,
-            List<long> accountIds, long financialYearId, DateOnly fromDate, DateOnly toDate)
+            List<long> accountIds, long financialYearId, DateOnly fromDate, DateOnly toDate, bool weekTotal = false)
         {
             InitializeComponent();
             _ledgerService = ledgerService;
@@ -24,6 +25,7 @@ namespace FruitAccounting.UI
             _financialYearId = financialYearId;
             _fromDate = fromDate;
             _toDate = toDate;
+            _weekTotal = weekTotal;
 
             lblHeading.Text = $"{heading}   ({fromDate:dd/MM/yyyy} to {toDate:dd/MM/yyyy})";
             Text = heading;
@@ -54,7 +56,8 @@ namespace FruitAccounting.UI
 
                 AddBalanceRow("Opening Balance :", result.OpeningBalance);
 
-                foreach (var row in result.Rows)
+                var displayRows = _weekTotal ? LedgerService.AggregateByWeek(result.Rows) : result.Rows;
+                foreach (var row in displayRows)
                 {
                     dgvLedger.Rows.Add(
                         row.Date.ToString("dd/MM/yyyy"),

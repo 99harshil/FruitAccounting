@@ -223,6 +223,14 @@ internal static class Program
                                         provider.GetRequiredService<AccountService>(),
                                         provider.GetRequiredService<AccountGroupService>(),
                                         companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Ledger (Daily)", () => new LedgerDailyForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value).ShowDialog()));
+            menu.Add(("Ledger (Monthly)", () => new LedgerMonthlyForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value).ShowDialog()));
         }
 
         while (true)
