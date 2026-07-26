@@ -24,6 +24,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Lets DevHarness populate Program.ServiceProvider from its own DI container, so forms
+         that resolve services via Program.ServiceProvider (MainShell's ShowForm dispatch,
+         LedgerReportForm's drill-down) work when launched through the harness too. -->
+    <InternalsVisibleTo Include="FruitAccounting.DevHarness" />
+  </ItemGroup>
+
+  <ItemGroup>
     <None Update="appsettings.json">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>

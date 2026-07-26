@@ -18,6 +18,7 @@ namespace FruitAccounting.UI
         private readonly long _companyId;
         private readonly long _financialYearId;
         private readonly long? _currentUserId;
+        private readonly long? _preselectPurchaseBillId;
 
         private List<Account> _accounts = new();
         private List<Item> _items = new();
@@ -29,7 +30,8 @@ namespace FruitAccounting.UI
         public PurchaseForm(PurchaseService purchaseService, AccountService accountService,
             AccountGroupService accountGroupService, RegionService regionService,
             ItemService itemService, LotService lotService,
-            long companyId, long financialYearId, long? currentUserId)
+            long companyId, long financialYearId, long? currentUserId,
+            long? preselectPurchaseBillId = null)
         {
             InitializeComponent();
             _purchaseService = purchaseService;
@@ -41,6 +43,7 @@ namespace FruitAccounting.UI
             _companyId = companyId;
             _financialYearId = financialYearId;
             _currentUserId = currentUserId;
+            _preselectPurchaseBillId = preselectPurchaseBillId;
 
             base.btnAdd = this.btnAdd;
             base.btnUpdate = this.btnUpdate;
@@ -71,15 +74,15 @@ namespace FruitAccounting.UI
                 _dataList = await _purchaseService.GetAllPurchaseBillsAsync(_financialYearId);
                 _nextBillNo = await _purchaseService.GetNextBillNoAsync(_financialYearId);
                 _nextLotNo = await _lotService.GetNextLotNoAsync(_financialYearId);
-                if (_dataList.Count > 0)
-                {
-                    _currentIndex = 0;
+
+                _currentIndex = _preselectPurchaseBillId.HasValue
+                    ? _dataList.FindIndex(b => b.PurchaseBillId == _preselectPurchaseBillId.Value)
+                    : (_dataList.Count > 0 ? 0 : -1);
+
+                if (_currentIndex >= 0)
                     DisplayCurrentRecord();
-                }
                 else
-                {
                     ClearForm();
-                }
             }
             catch (Exception ex)
             {

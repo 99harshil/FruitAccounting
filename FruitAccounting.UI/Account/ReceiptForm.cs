@@ -19,6 +19,7 @@ namespace FruitAccounting.UI
         private readonly long _financialYearId;
         private readonly char _bookTypeMode; // 'C' = Cash Receipt, 'B' = Bank Receipt
         private readonly long? _currentUserId;
+        private readonly long? _preselectReceiptId;
 
         private List<Account> _accounts = new();
         private List<Daybook> _daybooks = new();
@@ -27,7 +28,8 @@ namespace FruitAccounting.UI
 
         public ReceiptForm(ReceiptService receiptService, AccountService accountService, DaybookService daybookService,
             AccountGroupService accountGroupService, RegionService regionService,
-            long companyId, long financialYearId, char bookTypeMode, long? currentUserId)
+            long companyId, long financialYearId, char bookTypeMode, long? currentUserId,
+            long? preselectReceiptId = null)
         {
             InitializeComponent();
             _receiptService = receiptService;
@@ -39,6 +41,7 @@ namespace FruitAccounting.UI
             _financialYearId = financialYearId;
             _bookTypeMode = bookTypeMode;
             _currentUserId = currentUserId;
+            _preselectReceiptId = preselectReceiptId;
 
             Text = bookTypeMode == 'B' ? "Bank Receipt" : "Cash Receipt";
 
@@ -83,15 +86,15 @@ namespace FruitAccounting.UI
 
                 _dataList = await _receiptService.GetAllReceiptsAsync(_financialYearId, _bookTypeMode);
                 _nextReceiptNo = await _receiptService.GetNextReceiptNoAsync(_financialYearId);
-                if (_dataList.Count > 0)
-                {
-                    _currentIndex = 0;
+
+                _currentIndex = _preselectReceiptId.HasValue
+                    ? _dataList.FindIndex(r => r.ReceiptId == _preselectReceiptId.Value)
+                    : (_dataList.Count > 0 ? 0 : -1);
+
+                if (_currentIndex >= 0)
                     DisplayCurrentRecord();
-                }
                 else
-                {
                     ClearForm();
-                }
             }
             catch (Exception ex)
             {

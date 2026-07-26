@@ -27,11 +27,12 @@ namespace FruitAccounting.UI
         private bool _suppressHeaderEvents;
         private readonly long? _preselectPurchaseBillId;
         private readonly long? _preselectLotId;
+        private readonly int? _preselectInvNo;
 
         public SalesForm(SalesService salesService, AccountService accountService, AccountGroupService accountGroupService,
             RegionService regionService, CompanyService companyService,
             long companyId, long financialYearId, long? currentUserId,
-            long? preselectPurchaseBillId = null, long? preselectLotId = null)
+            long? preselectPurchaseBillId = null, long? preselectLotId = null, int? preselectInvNo = null)
         {
             InitializeComponent();
             _salesService = salesService;
@@ -44,6 +45,7 @@ namespace FruitAccounting.UI
             _currentUserId = currentUserId;
             _preselectPurchaseBillId = preselectPurchaseBillId;
             _preselectLotId = preselectLotId;
+            _preselectInvNo = preselectInvNo;
 
             base.btnAdd = this.btnAdd;
             base.btnUpdate = this.btnUpdate;
@@ -113,15 +115,14 @@ namespace FruitAccounting.UI
                 _nextInvNo = await _salesService.GetNextInvNoAsync(_financialYearId);
                 _dataList = await _salesService.GetAllSalesVouchersAsync(_financialYearId);
 
-                if (_dataList.Count > 0)
-                {
-                    _currentIndex = 0;
+                _currentIndex = _preselectInvNo.HasValue
+                    ? _dataList.FindIndex(v => v.InvNo == _preselectInvNo.Value)
+                    : (_dataList.Count > 0 ? 0 : -1);
+
+                if (_currentIndex >= 0)
                     await DisplayCurrentRecordAsync();
-                }
                 else
-                {
                     await ClearFormAsync();
-                }
             }
             catch (Exception ex)
             {

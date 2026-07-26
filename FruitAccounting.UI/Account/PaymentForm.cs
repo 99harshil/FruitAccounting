@@ -18,6 +18,7 @@ namespace FruitAccounting.UI
         private readonly long _financialYearId;
         private readonly char _bookTypeMode; // 'C' = Cash Payment, 'B' = Bank Payment
         private readonly long? _currentUserId;
+        private readonly long? _preselectPaymentId;
 
         private List<Account> _accounts = new();
         private List<Daybook> _daybooks = new();
@@ -26,7 +27,8 @@ namespace FruitAccounting.UI
 
         public PaymentForm(PaymentService paymentService, AccountService accountService, DaybookService daybookService,
             AccountGroupService accountGroupService, RegionService regionService,
-            long companyId, long financialYearId, char bookTypeMode, long? currentUserId)
+            long companyId, long financialYearId, char bookTypeMode, long? currentUserId,
+            long? preselectPaymentId = null)
         {
             InitializeComponent();
             _paymentService = paymentService;
@@ -38,6 +40,7 @@ namespace FruitAccounting.UI
             _financialYearId = financialYearId;
             _bookTypeMode = bookTypeMode;
             _currentUserId = currentUserId;
+            _preselectPaymentId = preselectPaymentId;
 
             Text = bookTypeMode == 'B' ? "Bank Payment" : "Cash Payment";
 
@@ -82,15 +85,15 @@ namespace FruitAccounting.UI
 
                 _dataList = await _paymentService.GetAllPaymentsAsync(_financialYearId, _bookTypeMode);
                 _nextPaymentNo = await _paymentService.GetNextPaymentNoAsync(_financialYearId);
-                if (_dataList.Count > 0)
-                {
-                    _currentIndex = 0;
+
+                _currentIndex = _preselectPaymentId.HasValue
+                    ? _dataList.FindIndex(p => p.PaymentId == _preselectPaymentId.Value)
+                    : (_dataList.Count > 0 ? 0 : -1);
+
+                if (_currentIndex >= 0)
                     DisplayCurrentRecord();
-                }
                 else
-                {
                     ClearForm();
-                }
             }
             catch (Exception ex)
             {

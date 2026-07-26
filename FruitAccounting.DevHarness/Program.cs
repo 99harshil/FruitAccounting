@@ -68,6 +68,11 @@ internal static class Program
         services.AddScoped<UserPreferencesService>();
         using var provider = services.BuildServiceProvider();
 
+        // MainShell's ShowForm dispatch and LedgerReportForm's drill-down both resolve services
+        // via Program.ServiceProvider rather than through constructor injection - point it at
+        // this harness's own container so those code paths work here too.
+        FruitAccounting.UI.Program.ServiceProvider = provider;
+
         long companyId;
         long? financialYearId;
         Company? company;
@@ -208,7 +213,7 @@ internal static class Program
             menu.Add(("Ledger (Selected)", () => new LedgerReportForm(
                                         provider.GetRequiredService<LedgerService>(),
                                         provider.GetRequiredService<AccountService>(),
-                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
+                                        companyId, financialYearId.Value, financialYear!, user?.UserId).ShowDialog()));
         }
 
         while (true)

@@ -469,7 +469,7 @@ namespace FruitAccounting.UI
                     var accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
                     if (ledgerService != null && accountServiceForLedger != null)
                         newForm = new LedgerReportForm(ledgerService, accountServiceForLedger,
-                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear, _loggedInUser.UserId);
                     break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;

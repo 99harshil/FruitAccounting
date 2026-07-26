@@ -13,7 +13,7 @@ namespace FruitAccounting.UI
     internal static class Program
     {
         public static string ConnectionString { get; private set; } = string.Empty;
-        public static IServiceProvider? ServiceProvider { get; private set; }
+        public static IServiceProvider? ServiceProvider { get; internal set; }
 
         [STAThread]
         static async Task Main()

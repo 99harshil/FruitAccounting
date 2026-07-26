@@ -30,6 +30,19 @@ public class LedgerService
 
         // Signed running balance as of this row: positive = Dr, negative = Cr.
         public decimal RunningBalance { get; set; }
+
+        // Short voucher-type code shown in its own grid column, e.g. "CR"/"BR"/"CP"/"BP"/"S"/"P"/"JV".
+        public string VoucherCode { get; set; } = "";
+
+        // Drill-down keys, so the UI can open the originating voucher screen on this row.
+        public VoucherType VoucherType { get; set; }
+        // Meaning depends on VoucherType: PurchaseBillId / SaleId / ReceiptId / PaymentId / JournalVoucherId.
+        public long VoucherId { get; set; }
+        // Sales only - SalesForm navigates by InvNo (a voucher groups several Sale rows), not SaleId.
+        public int? SalesInvNo { get; set; }
+        // Receipt/Payment only - which book ('C'ash or 'B'ank) the originating ReceiptForm/PaymentForm
+        // instance must be opened in, since those forms are book-type-scoped.
+        public char? BookType { get; set; }
     }
 
     public class LedgerResult
@@ -104,6 +117,7 @@ public class LedgerService
             ? new Dictionary<long, Receipt>()
             : await context.Receipts.AsNoTracking()
                 .Include(r => r.CreatedByNavigation)
+                .Include(r => r.Daybook)
                 .Where(r => receiptVoucherIds.Contains(r.ReceiptId))
                 .ToDictionaryAsync(r => r.ReceiptId);
 
@@ -113,6 +127,7 @@ public class LedgerService
             ? new Dictionary<long, Payment>()
             : await context.Payments.AsNoTracking()
                 .Include(p => p.CreatedByNavigation)
+                .Include(p => p.Daybook)
                 .Where(p => paymentVoucherIds.Contains(p.PaymentId))
                 .ToDictionaryAsync(p => p.PaymentId);
 
@@ -148,6 +163,9 @@ public class LedgerService
             totalDebit += e.Debit;
             totalCredit += e.Credit;
             var (detail, chequeOrUser) = BuildDetail(e, receiptsById, paymentsById, journalsById, salesById);
+            var bookType = e.VoucherType == VoucherType.Receipt && receiptsById.TryGetValue(e.VoucherId, out var rc) ? rc.Daybook.BookType
+                : e.VoucherType == VoucherType.Payment && paymentsById.TryGetValue(e.VoucherId, out var pm) ? pm.Daybook.BookType
+                : (char?)null;
             rows.Add(new LedgerRow
             {
                 Date = e.EntryDate,
@@ -155,7 +173,12 @@ public class LedgerService
                 ChequeOrUser = chequeOrUser,
                 Debit = e.Debit,
                 Credit = e.Credit,
-                RunningBalance = running
+                RunningBalance = running,
+                VoucherCode = VoucherCode(e.VoucherType, bookType),
+                VoucherType = e.VoucherType,
+                VoucherId = e.VoucherId,
+                SalesInvNo = e.VoucherType == VoucherType.SalesBill && salesById.TryGetValue(e.VoucherId, out var s) ? s.InvNo : null,
+                BookType = bookType
             });
         }
 
@@ -170,24 +193,43 @@ public class LedgerService
         };
     }
 
+    private static string VoucherCode(VoucherType voucherType, char? bookType) => voucherType switch
+    {
+        VoucherType.Receipt => bookType == 'B' ? "BR" : "CR",
+        VoucherType.Payment => bookType == 'B' ? "BP" : "CP",
+        VoucherType.SalesBill => "S",
+        VoucherType.PurchaseBill => "P",
+        VoucherType.Journal => "JV",
+        VoucherType.BankEntry => "BE",
+        VoucherType.TdsPayment => "TDS",
+        VoucherType.OpeningBalance => "OB",
+        VoucherType.Crate => "CT",
+        VoucherType.ColdStorage => "CS",
+        VoucherType.DesavarPurchase => "DP",
+        VoucherType.DesavarSale => "DS",
+        VoucherType.ImportPurchase => "IP",
+        VoucherType.ImportSale => "IS",
+        _ => ""
+    };
+
     private static (string Detail, string ChequeOrUser) BuildDetail(LedgerEntry e,
         Dictionary<long, Receipt> receiptsById, Dictionary<long, Payment> paymentsById,
         Dictionary<long, JournalVoucher> journalsById, Dictionary<long, Sale> salesById)
     {
         // Sales: the quantity sold is more useful on a party's ledger than the invoice number.
         if (e.VoucherType == VoucherType.SalesBill && salesById.TryGetValue(e.VoucherId, out var sale))
-            return ($"Qty: {sale.Quantity:N2}", "");
+            return ($"Tot.Qty : {sale.Quantity:0.##}", "");
 
         if (e.VoucherType == VoucherType.Receipt && receiptsById.TryGetValue(e.VoucherId, out var receipt))
         {
-            var detail = $"{ContraDisplay(e)}\nVatav: {receipt.Vatav:N2}   Amount: {receipt.TotalSettled:N2}";
+            var detail = $"{ContraDisplay(e)}\n{AmountVatavLine(receipt.TotalSettled, receipt.Vatav)}";
             var chequeOrUser = ChequeOrUser(receipt.ChequeNo, receipt.CreatedByNavigation);
             return (detail, chequeOrUser);
         }
 
         if (e.VoucherType == VoucherType.Payment && paymentsById.TryGetValue(e.VoucherId, out var payment))
         {
-            var detail = $"{ContraDisplay(e)}\nVatav: {payment.Vatav:N2}   Amount: {payment.TotalSettled:N2}";
+            var detail = $"{ContraDisplay(e)}\n{AmountVatavLine(payment.TotalSettled, payment.Vatav)}";
             var chequeOrUser = ChequeOrUser(payment.ChequeNo, payment.CreatedByNavigation);
             return (detail, chequeOrUser);
         }
@@ -203,6 +245,16 @@ public class LedgerService
         if (!string.IsNullOrWhiteSpace(e.Narration)) return (e.Narration!, "");
         if (e.ContraAccount != null) return (e.ContraAccount.Name, "");
         return (e.VoucherType.ToString(), "");
+    }
+
+    // Amount is always shown when non-zero; Vatav only tags along when it actually applies -
+    // no "Vatav: 0.00" clutter on the common case where no discount was given.
+    private static string AmountVatavLine(decimal amount, decimal vatav)
+    {
+        if (amount == 0 && vatav == 0) return "";
+        var parts = new List<string> { $"Amount: {amount:N2}" };
+        if (vatav != 0) parts.Add($"Vatav: {vatav:N2}");
+        return string.Join("   ", parts);
     }
 
     private static string ContraDisplay(LedgerEntry e)

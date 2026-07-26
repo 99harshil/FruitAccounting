@@ -14,13 +14,15 @@ namespace FruitAccounting.UI
         private readonly long _companyId;
         private readonly long _financialYearId;
         private readonly long? _currentUserId;
+        private readonly long? _preselectJournalVoucherId;
 
         private List<Account> _accounts = new();
         private long _nextVoucherNo = 1;
         private bool _suppressGridEvents;
 
         public JournalForm(JournalService journalService, AccountService accountService,
-            long companyId, long financialYearId, long? currentUserId)
+            long companyId, long financialYearId, long? currentUserId,
+            long? preselectJournalVoucherId = null)
         {
             InitializeComponent();
             _journalService = journalService;
@@ -28,6 +30,7 @@ namespace FruitAccounting.UI
             _companyId = companyId;
             _financialYearId = financialYearId;
             _currentUserId = currentUserId;
+            _preselectJournalVoucherId = preselectJournalVoucherId;
 
             base.btnAdd = this.btnAdd;
             base.btnUpdate = this.btnUpdate;
@@ -56,15 +59,15 @@ namespace FruitAccounting.UI
 
                 _dataList = await _journalService.GetAllJournalVouchersAsync(_financialYearId);
                 _nextVoucherNo = await _journalService.GetNextVoucherNoAsync(_financialYearId);
-                if (_dataList.Count > 0)
-                {
-                    _currentIndex = 0;
+
+                _currentIndex = _preselectJournalVoucherId.HasValue
+                    ? _dataList.FindIndex(v => v.JournalVoucherId == _preselectJournalVoucherId.Value)
+                    : (_dataList.Count > 0 ? 0 : -1);
+
+                if (_currentIndex >= 0)
                     DisplayCurrentRecord();
-                }
                 else
-                {
                     ClearForm();
-                }
             }
             catch (Exception ex)
             {
