@@ -259,7 +259,14 @@ public class SalesService
             context.Sales.AddRange(sales);
             await context.SaveChangesAsync();
 
-            var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, sales, nextInvNo);
+            //var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, sales, nextInvNo);
+            // Reload sales with Buyer included so AmanatPartyId is accessible in ledger posting
+            var reloadedSales = await context.Sales
+                .Include(s => s.Buyer)
+                .Where(s => s.FinancialYearId == input.FinancialYearId && s.InvNo == nextInvNo)
+                .ToListAsync();
+
+            var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, reloadedSales, nextInvNo);
             if (!postOk)
             {
                 await transaction.RollbackAsync();
@@ -308,7 +315,14 @@ public class SalesService
             context.Sales.AddRange(sales);
             await context.SaveChangesAsync();
 
-            var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, sales, invNo);
+            //var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, sales, invNo);
+            // Reload sales with Buyer included so AmanatPartyId is accessible in ledger posting
+            var reloadedSales = await context.Sales
+                .Include(s => s.Buyer)
+                .Where(s => s.FinancialYearId == input.FinancialYearId && s.InvNo == invNo)
+                .ToListAsync();
+
+            var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, reloadedSales, invNo);
             if (!postOk)
             {
                 await transaction.RollbackAsync();
@@ -443,12 +457,22 @@ public class SalesService
 
         foreach (var sale in sales)
         {
+            // GL Routing: if buyer has Amanat Party, post to Amanat Party account; otherwise post to buyer
+            var buyerPostingAccountId = (sale.Buyer?.AmanatPartyId ?? sale.BuyerId);
+
+            // Audit trail: if posting to Amanat Party (not back to buyer), preserve buyer ID for traceability
+            var originalAccountId = (sale.Buyer?.AmanatPartyId != null
+                                     && sale.Buyer.AmanatPartyId != sale.BuyerId)
+                ? sale.BuyerId
+                : (long?)null;
+
             // What the buyer owes: goods cost plus the labour/APMC charges passed through to them.
             entries.Add(new LedgerEntry
             {
                 FinancialYearId = sale.FinancialYearId,
                 EntryDate = sale.SaleDate,
-                AccountId = sale.BuyerId,
+                AccountId = buyerPostingAccountId,
+                OriginalAccountId = originalAccountId,
                 Debit = sale.NetAmount,
                 Credit = 0,
                 VoucherId = sale.SaleId,
@@ -469,7 +493,7 @@ public class SalesService
                 VoucherId = sale.SaleId,
                 VoucherType = VoucherType.SalesBill,
                 Narration = $"Sales #{invNo}",
-                ContraAccountId = sale.BuyerId,
+                ContraAccountId = buyerPostingAccountId,
                 CreatedAt = DateTime.UtcNow
             });
 
@@ -489,7 +513,8 @@ public class SalesService
                     VoucherId = sale.SaleId,
                     VoucherType = VoucherType.SalesBill,
                     Narration = $"Labour on Sales #{invNo}",
-                    ContraAccountId = sale.BuyerId,
+                    ContraAccountId = buyerPostingAccountId,
+                    OriginalAccountId = originalAccountId,
                     CreatedAt = DateTime.UtcNow
                 });
             }
@@ -510,7 +535,8 @@ public class SalesService
                     VoucherId = sale.SaleId,
                     VoucherType = VoucherType.SalesBill,
                     Narration = $"APMC on Sales #{invNo}",
-                    ContraAccountId = sale.BuyerId,
+                    ContraAccountId = buyerPostingAccountId,
+                    OriginalAccountId = originalAccountId,
                     CreatedAt = DateTime.UtcNow
                 });
             }

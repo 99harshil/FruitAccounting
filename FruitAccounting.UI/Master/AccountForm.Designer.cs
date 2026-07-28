@@ -75,6 +75,7 @@ namespace FruitAccounting.UI
             lblNameInBank = new Label();
             lblPartyGrpValue = new Label();
             lblPartyGrp = new Label();
+            cmbPartyGroup = new ComboBox();
             cmbAmanatParty = new ComboBox();
             lblAmanatParty = new Label();
             panelGroupFinancial = new Panel();
@@ -566,6 +567,7 @@ namespace FruitAccounting.UI
             panelBankAmanat.Controls.Add(lblNameInBank);
             panelBankAmanat.Controls.Add(lblPartyGrpValue);
             panelBankAmanat.Controls.Add(lblPartyGrp);
+            panelBankAmanat.Controls.Add(cmbPartyGroup);
             panelBankAmanat.Controls.Add(cmbAmanatParty);
             panelBankAmanat.Controls.Add(lblAmanatParty);
             panelBankAmanat.Location = new Point(12, 326);
@@ -701,6 +703,17 @@ namespace FruitAccounting.UI
             lblPartyGrp.TabIndex = 2;
             lblPartyGrp.Text = "Party Grp";
             //
+            // cmbPartyGroup
+            //
+            cmbPartyGroup.BackColor = Color.FromArgb(255, 255, 192);
+            cmbPartyGroup.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbPartyGroup.FlatStyle = FlatStyle.Flat;
+            cmbPartyGroup.FormattingEnabled = true;
+            cmbPartyGroup.Location = new Point(395, 14);
+            cmbPartyGroup.Name = "cmbPartyGroup";
+            cmbPartyGroup.Size = new Size(150, 23);
+            cmbPartyGroup.TabIndex = 3;
+            //
             // cmbAmanatParty
             //
             cmbAmanatParty.BackColor = Color.FromArgb(255, 255, 192);
@@ -711,7 +724,6 @@ namespace FruitAccounting.UI
             cmbAmanatParty.Name = "cmbAmanatParty";
             cmbAmanatParty.Size = new Size(220, 23);
             cmbAmanatParty.TabIndex = 1;
-            cmbAmanatParty.SelectedIndexChanged += cmbAmanatParty_SelectedIndexChanged;
             //
             // lblAmanatParty
             //
@@ -1049,6 +1061,7 @@ namespace FruitAccounting.UI
         private Panel panelBankAmanat;
         private Label lblAmanatParty;
         private ComboBox cmbAmanatParty;
+        private ComboBox cmbPartyGroup;
         private Label lblPartyGrp;
         private Label lblPartyGrpValue;
         private Label lblNameInBank;

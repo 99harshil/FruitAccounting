@@ -186,7 +186,12 @@ public class PurchaseService
                 });
             }
 
-            var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, bill);
+            // Reload bill with Supplier included so AmanatPartyId is accessible in ledger posting
+            var reloadedBill = await context.PurchaseBills
+                .Include(b => b.Supplier)
+                .FirstOrDefaultAsync(b => b.PurchaseBillId == bill.PurchaseBillId);
+
+            var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, reloadedBill!); 
             if (!postOk)
             {
                 await transaction.RollbackAsync();
@@ -286,7 +291,12 @@ public class PurchaseService
 
             await context.SaveChangesAsync();
 
-            var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, bill);
+            // Reload bill with Supplier included so AmanatPartyId is accessible in ledger posting
+            var reloadedBill = await context.PurchaseBills
+                .Include(b => b.Supplier)
+                .FirstOrDefaultAsync(b => b.PurchaseBillId == purchaseBillId);
+
+            var (postOk, postMessage) = await BuildAndAddLedgerEntriesAsync(context, reloadedBill!); 
             if (!postOk)
             {
                 await transaction.RollbackAsync();
@@ -319,6 +329,14 @@ public class PurchaseService
 
             if (bill.PaymentAllocations.Any())
                 return (false, "Cannot delete a Purchase Bill that has Payments allocated against it");
+
+            // Check if any Sales exist for lots in this Purchase Bill
+            var lotIds = bill.PurchaseBillItems.Select(i => i.LotId).ToList();
+            var salesForThisLot = await context.Sales
+                .Where(s => lotIds.Contains(s.LotId))
+                .AnyAsync();
+            if (salesForThisLot)
+                return (false, "Cannot delete a Purchase Bill that has Sales created from its Lots. Delete the related Sales first");
 
             var deductions = await context.TdsPurchaseDeductions
                 .Where(d => d.PurchaseBillId == purchaseBillId)
@@ -465,6 +483,15 @@ public class PurchaseService
         if (purchaseAccountId == null)
             return (false, "No Purchase account is configured (system_parameters: PURCHASE_ACCOUNT_ID)");
 
+        // GL Routing: if supplier has Amanat Party, post to Amanat Party account; otherwise post to supplier
+        var supplierPostingAccountId = (bill.Supplier?.AmanatPartyId ?? bill.SupplierId);
+
+        // Audit trail: if posting to Amanat Party (not back to supplier), preserve supplier ID for traceability
+        var originalAccountId = (bill.Supplier?.AmanatPartyId != null
+                                 && bill.Supplier.AmanatPartyId != bill.SupplierId)
+            ? bill.SupplierId
+            : (long?)null;
+
         // The full gross cost of goods purchased
         entries.Add(new LedgerEntry
         {
@@ -476,16 +503,17 @@ public class PurchaseService
             VoucherId = bill.PurchaseBillId,
             VoucherType = VoucherType.PurchaseBill,
             Narration = $"Purchase Bill #{bill.BillNo}",
-            ContraAccountId = bill.SupplierId,
+            ContraAccountId = supplierPostingAccountId,
             CreatedAt = DateTime.UtcNow
         });
 
-        // What's actually owed to the supplier after every deduction
+        // What's actually owed to the supplier (or Amanat Party) after every deduction
         entries.Add(new LedgerEntry
         {
             FinancialYearId = bill.FinancialYearId,
             EntryDate = bill.BillDate,
-            AccountId = bill.SupplierId,
+            AccountId = supplierPostingAccountId,
+            OriginalAccountId = originalAccountId,
             Debit = 0,
             Credit = bill.NetAmount,
             VoucherId = bill.PurchaseBillId,
@@ -510,7 +538,8 @@ public class PurchaseService
                 VoucherId = bill.PurchaseBillId,
                 VoucherType = VoucherType.PurchaseBill,
                 Narration = narration,
-                ContraAccountId = bill.SupplierId,
+                ContraAccountId = supplierPostingAccountId,
+                OriginalAccountId = originalAccountId,
                 CreatedAt = DateTime.UtcNow
             });
             return (true, "");

@@ -30,6 +30,8 @@ public partial class LedgerEntry
 
     public long? ContraAccountId { get; set; }
 
+    public long? OriginalAccountId { get; set; }
+
     public decimal? Quantity { get; set; }
 
     public DateOnly? ClearanceDate { get; set; }
@@ -41,6 +43,8 @@ public partial class LedgerEntry
     public virtual ICollection<BankStatementLine> BankStatementLines { get; set; } = new List<BankStatementLine>();
 
     public virtual Account? ContraAccount { get; set; }
+
+    public virtual Account? OriginalAccount { get; set; }
 
     public virtual FinancialYear FinancialYear { get; set; } = null!;
 }

@@ -127,6 +127,7 @@ public class LedgerService
         var entries = await context.LedgerEntries
             .AsNoTracking()
             .Include(e => e.ContraAccount)
+            .Include(e => e.OriginalAccount)
             .Where(e => e.AccountId == accountId && e.FinancialYearId == financialYearId
                         && e.EntryDate >= fromDate && e.EntryDate <= toDate)
             .OrderBy(e => e.EntryDate)
@@ -187,7 +188,7 @@ public class LedgerService
 
             totalDebit += e.Debit;
             totalCredit += e.Credit;
-            var (detail, chequeOrUser) = BuildDetail(e, receiptsById, paymentsById, journalsById, salesById);
+            var (detail, chequeOrUser) = BuildDetail(e, receiptsById, paymentsById, journalsById, salesById, account);
             var bookType = e.VoucherType == VoucherType.Receipt && receiptsById.TryGetValue(e.VoucherId, out var rc) ? rc.Daybook.BookType
                 : e.VoucherType == VoucherType.Payment && paymentsById.TryGetValue(e.VoucherId, out var pm) ? pm.Daybook.BookType
                 : (char?)null;
@@ -277,11 +278,16 @@ public class LedgerService
 
     private static (string Detail, string ChequeOrUser) BuildDetail(LedgerEntry e,
         Dictionary<long, Receipt> receiptsById, Dictionary<long, Payment> paymentsById,
-        Dictionary<long, JournalVoucher> journalsById, Dictionary<long, Sale> salesById)
+        Dictionary<long, JournalVoucher> journalsById, Dictionary<long, Sale> salesById, Account account)
     {
-        // Sales: the quantity sold is more useful on a party's ledger than the invoice number.
+        // Sales: show quantity and original account (Amanat Party audit trail) if routed from another party
         if (e.VoucherType == VoucherType.SalesBill && salesById.TryGetValue(e.VoucherId, out var sale))
-            return ($"Tot.Qty : {sale.Quantity:0.##}", "");
+        {
+            var detail = $"Qty: {sale.Quantity:0.##}";
+            if (e.OriginalAccount != null)
+                detail += $" (From: {e.OriginalAccount.Name})";
+            return (detail, "");
+        }
 
         if (e.VoucherType == VoucherType.Receipt && receiptsById.TryGetValue(e.VoucherId, out var receipt))
         {
@@ -305,8 +311,20 @@ public class LedgerService
             return (detail, chequeOrUser);
         }
 
-        if (!string.IsNullOrWhiteSpace(e.Narration)) return (e.Narration!, "");
-        if (e.ContraAccount != null) return (e.ContraAccount.Name, "");
+        if (!string.IsNullOrWhiteSpace(e.Narration))
+        {
+            var narration = e.Narration!;
+            if (e.OriginalAccount != null)
+                narration += $" (From: {e.OriginalAccount.Name})";
+            return (narration, "");
+        }
+        if (e.ContraAccount != null)
+        {
+            var contraName = e.ContraAccount.Name;
+            if (e.OriginalAccount != null)
+                contraName += $" (From: {e.OriginalAccount.Name})";
+            return (contraName, "");
+        }
         return (e.VoucherType.ToString(), "");
     }
 
@@ -332,5 +350,108 @@ public class LedgerService
     {
         if (!string.IsNullOrWhiteSpace(chequeNo)) return chequeNo!;
         return createdBy?.DisplayName ?? createdBy?.Username ?? "";
+    }
+
+    /// Delegate Ledger: shows transactions of a delegate account (e.g., Ramesh) that were routed
+    /// to an Amanat Party account (e.g., PS), filtered by OriginalAccountId. No running balance.
+    public async Task<LedgerResult> GetDelegateLedgerAsync(long delegateAccountId, long amanatPartyAccountId,
+        long financialYearId, DateOnly fromDate, DateOnly toDate)
+    {
+        using var context = _contextFactory.CreateDbContext();
+
+        var delegateAccount = await context.Accounts.AsNoTracking().FirstOrDefaultAsync(a => a.AccountId == delegateAccountId);
+        var amanatPartyAccount = await context.Accounts.AsNoTracking().FirstOrDefaultAsync(a => a.AccountId == amanatPartyAccountId);
+
+        if (delegateAccount == null || amanatPartyAccount == null)
+            return new LedgerResult { Account = null!, Rows = new() };
+
+        // Fetch all entries posted to Amanat Party account that originated from the delegate
+        var entries = await context.LedgerEntries
+            .AsNoTracking()
+            .Include(e => e.ContraAccount)
+            .Include(e => e.OriginalAccount)
+            .Where(e => e.AccountId == amanatPartyAccountId
+                        && e.OriginalAccountId == delegateAccountId
+                        && e.FinancialYearId == financialYearId
+                        && e.EntryDate >= fromDate
+                        && e.EntryDate <= toDate)
+            .OrderBy(e => e.EntryDate)
+            .ThenBy(e => e.LedgerEntryId)
+            .ToListAsync();
+
+        // Load supporting data (same as regular ledger)
+        var receiptVoucherIds = entries.Where(e => e.VoucherType == VoucherType.Receipt)
+            .Select(e => e.VoucherId).Distinct().ToList();
+        var receiptsById = receiptVoucherIds.Count == 0
+            ? new Dictionary<long, Receipt>()
+            : await context.Receipts.AsNoTracking()
+                .Include(r => r.CreatedByNavigation)
+                .Include(r => r.Daybook)
+                .Where(r => receiptVoucherIds.Contains(r.ReceiptId))
+                .ToDictionaryAsync(r => r.ReceiptId);
+
+        var paymentVoucherIds = entries.Where(e => e.VoucherType == VoucherType.Payment)
+            .Select(e => e.VoucherId).Distinct().ToList();
+        var paymentsById = paymentVoucherIds.Count == 0
+            ? new Dictionary<long, Payment>()
+            : await context.Payments.AsNoTracking()
+                .Include(p => p.CreatedByNavigation)
+                .Include(p => p.Daybook)
+                .Where(p => paymentVoucherIds.Contains(p.PaymentId))
+                .ToDictionaryAsync(p => p.PaymentId);
+
+        var journalVoucherIds = entries.Where(e => e.VoucherType == VoucherType.Journal)
+            .Select(e => e.VoucherId).Distinct().ToList();
+        var journalsById = journalVoucherIds.Count == 0
+            ? new Dictionary<long, JournalVoucher>()
+            : await context.JournalVouchers.AsNoTracking()
+                .Include(j => j.CreatedByNavigation)
+                .Where(j => journalVoucherIds.Contains(j.JournalVoucherId))
+                .ToDictionaryAsync(j => j.JournalVoucherId);
+
+        var saleVoucherIds = entries.Where(e => e.VoucherType == VoucherType.SalesBill)
+            .Select(e => e.VoucherId).Distinct().ToList();
+        var salesById = saleVoucherIds.Count == 0
+            ? new Dictionary<long, Sale>()
+            : await context.Sales.AsNoTracking()
+                .Where(s => saleVoucherIds.Contains(s.SaleId))
+                .ToDictionaryAsync(s => s.SaleId);
+
+        // Build rows (no running balance for delegate ledger)
+        var rows = new List<LedgerRow>();
+        decimal totalDebit = 0m, totalCredit = 0m;
+        foreach (var e in entries)
+        {
+            totalDebit += e.Debit;
+            totalCredit += e.Credit;
+            var (detail, chequeOrUser) = BuildDetail(e, receiptsById, paymentsById, journalsById, salesById, amanatPartyAccount);
+            var bookType = e.VoucherType == VoucherType.Receipt && receiptsById.TryGetValue(e.VoucherId, out var rc) ? rc.Daybook.BookType
+                : e.VoucherType == VoucherType.Payment && paymentsById.TryGetValue(e.VoucherId, out var pm) ? pm.Daybook.BookType
+                : (char?)null;
+            rows.Add(new LedgerRow
+            {
+                Date = e.EntryDate,
+                Detail = detail,
+                ChequeOrUser = chequeOrUser,
+                Debit = e.Debit,
+                Credit = e.Credit,
+                RunningBalance = 0, // Not used in delegate ledger
+                VoucherCode = VoucherCode(e.VoucherType, bookType),
+                VoucherType = e.VoucherType,
+                VoucherId = e.VoucherId,
+                SalesInvNo = e.VoucherType == VoucherType.SalesBill && salesById.TryGetValue(e.VoucherId, out var s) ? s.InvNo : null,
+                BookType = bookType
+            });
+        }
+
+        return new LedgerResult
+        {
+            Account = delegateAccount,
+            OpeningBalance = 0, // No opening balance for delegate view
+            Rows = rows,
+            TotalDebit = totalDebit,
+            TotalCredit = totalCredit,
+            ClosingBalance = totalDebit - totalCredit
+        };
     }
 }

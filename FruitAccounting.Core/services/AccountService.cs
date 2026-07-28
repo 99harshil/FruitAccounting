@@ -113,6 +113,7 @@ public class AccountService
         public bool IsTdsApplicable { get; set; } = true;
         public string? TdsHead { get; set; }
         public long? AmanatPartyId { get; set; }
+        public long? PartyGroupId { get; set; }
         public string? NameInBank { get; set; }
         public decimal? CreditLimit { get; set; }
         public string? BankName { get; set; }
@@ -171,6 +172,7 @@ public class AccountService
                 IsTdsApplicable = input.IsTdsApplicable,
                 TdsHead = input.TdsHead,
                 AmanatPartyId = input.AmanatPartyId,
+                PartyGroupId = input.PartyGroupId,
                 NameInBank = input.NameInBank,
                 CreditLimit = input.CreditLimit,
                 BankName = input.BankName,
@@ -252,6 +254,7 @@ public class AccountService
             account.IsTdsApplicable = input.IsTdsApplicable;
             account.TdsHead = input.TdsHead;
             account.AmanatPartyId = input.AmanatPartyId ?? accountId; // default back to self if cleared
+            account.PartyGroupId = input.PartyGroupId;
             account.NameInBank = input.NameInBank;
             account.CreditLimit = input.CreditLimit;
             account.BankName = input.BankName;

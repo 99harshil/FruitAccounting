@@ -19,6 +19,7 @@ namespace FruitAccounting.UI
         private List<Region> _regions = new();
         private List<AccountGroup> _groups = new(); // Main + Sub Groups combined
         private List<Account> _amanatCandidates = new();
+        private List<Account> _partyGroupCandidates = new();
 
         private const string NoRegionOption = "(None)";
 
@@ -69,11 +70,17 @@ namespace FruitAccounting.UI
 
                 _dataList = await _accountService.GetAllAccountsAsync(_companyId);
 
-                // Blocked accounts must not be selectable as another account's Amanat Party
+                // Blocked accounts must not be selectable as another account's Amanat Party or Party Group
                 _amanatCandidates = _dataList.Where(a => !a.IsBlocked).ToList();
+                _partyGroupCandidates = _dataList.Where(a => !a.IsBlocked).ToList();
+
                 cmbAmanatParty.Items.Clear();
                 foreach (var acc in _amanatCandidates)
                     cmbAmanatParty.Items.Add($"{acc.Code} - {acc.Name}");
+
+                cmbPartyGroup.Items.Clear();
+                foreach (var acc in _partyGroupCandidates)
+                    cmbPartyGroup.Items.Add($"{acc.Code} - {acc.Name}");
 
                 if (_dataList.Count > 0)
                 {
@@ -124,7 +131,9 @@ namespace FruitAccounting.UI
 
             int amanatIndex = a.AmanatPartyId.HasValue ? _amanatCandidates.FindIndex(x => x.AccountId == a.AmanatPartyId.Value) : -1;
             cmbAmanatParty.SelectedIndex = amanatIndex;
-            UpdatePartyGrpDisplay();
+
+            int partyGroupIndex = a.PartyGroupId.HasValue ? _partyGroupCandidates.FindIndex(x => x.AccountId == a.PartyGroupId.Value) : -1;
+            cmbPartyGroup.SelectedIndex = partyGroupIndex;
 
             txtNameInBank.Text = a.NameInBank ?? "";
             SetDecimalText(txtCreditLimit, a.CreditLimit);
@@ -170,7 +179,7 @@ namespace FruitAccounting.UI
             txtTdsHead.Clear();
 
             cmbAmanatParty.SelectedIndex = -1;
-            lblPartyGrpValue.Text = "";
+            cmbPartyGroup.SelectedIndex = -1;
 
             txtNameInBank.Clear();
             txtCreditLimit.Clear();
@@ -254,6 +263,7 @@ namespace FruitAccounting.UI
                 IsTdsApplicable = chkTdsApplicable.Checked,
                 TdsHead = EmptyToNull(txtTdsHead.Text),
                 AmanatPartyId = cmbAmanatParty.SelectedIndex >= 0 ? _amanatCandidates[cmbAmanatParty.SelectedIndex].AccountId : null,
+                PartyGroupId = cmbPartyGroup.SelectedIndex >= 0 ? _partyGroupCandidates[cmbPartyGroup.SelectedIndex].AccountId : null,
                 NameInBank = EmptyToNull(txtNameInBank.Text),
                 CreditLimit = ParseDecimalOrNull(txtCreditLimit.Text),
                 BankName = EmptyToNull(txtBankName.Text),
@@ -299,7 +309,7 @@ namespace FruitAccounting.UI
                 cmbRegion, btnNewRegion, txtName, txtAddress1, txtAddress2, txtCity, txtPinCode,
                 txtCountry, txtContactPerson, txtPhone, txtMobile, txtFax, txtEmail, chkBlockParty,
                 txtCommission, txtVatav, txtAamanat, txtCrateDeposit, txtLabour, chkApmc, chkTdsApplicable, txtTdsHead,
-                cmbAmanatParty, txtNameInBank, txtCreditLimit, txtBankName, txtBranch, txtBankAccountNo, txtIfsc,
+                cmbAmanatParty, cmbPartyGroup, txtNameInBank, txtCreditLimit, txtBankName, txtBranch, txtBankAccountNo, txtIfsc,
                 cmbBsGroup, btnNewGroup, txtPan, txtTin, txtEditPin, txtCst
             };
 
@@ -309,19 +319,6 @@ namespace FruitAccounting.UI
             // Code is only editable while adding a new account - it's the identity key
             // once records/history exist against it, so Update must not be able to change it
             txtCode.Enabled = isEditing && _isAddMode;
-        }
-
-        private void UpdatePartyGrpDisplay()
-        {
-            if (cmbAmanatParty.SelectedIndex >= 0)
-            {
-                var selected = _amanatCandidates[cmbAmanatParty.SelectedIndex];
-                lblPartyGrpValue.Text = $"{selected.Code} - {selected.Name}";
-            }
-            else
-            {
-                lblPartyGrpValue.Text = "";
-            }
         }
 
         private static void SetDecimalText(TextBox box, decimal? value)
@@ -346,8 +343,6 @@ namespace FruitAccounting.UI
             else
                 combo.SelectedIndex = rawIndex;
         }
-
-        private void cmbAmanatParty_SelectedIndexChanged(object sender, EventArgs e) => UpdatePartyGrpDisplay();
 
         private async void btnNewRegion_Click(object sender, EventArgs e)
         {

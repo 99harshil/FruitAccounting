@@ -150,13 +150,49 @@ namespace FruitAccounting.UI
             bool includeOpeningBalance = !rbWithoutOpening.Checked;
             bool summaryOnly = rbSummary.Checked;
 
-            var result = await _ledgerService.GetLedgerAsync(account.AccountId, _financialYearId, fromDate, toDate,
-                voucherTypeFilter, includeOpeningBalance);
+            // Auto-detect if this is a delegate account (has Amanat Party set and it's not self)
+            bool isDelegateAccount = account.AmanatPartyId.HasValue
+                && account.AmanatPartyId.Value != account.AccountId;
+
+            LedgerService.LedgerResult result;
+
+            if (isDelegateAccount)
+            {
+                // This is a delegate account - show its activity from the Amanat Party's ledger
+                var amanatParty = _accounts.FirstOrDefault(a => a.AccountId == account.AmanatPartyId.Value);
+                if (amanatParty == null)
+                {
+                    MessageBox.Show("Amanat Party not found", "Ledger");
+                    return;
+                }
+
+                result = await _ledgerService.GetDelegateLedgerAsync(
+                    account.AccountId, amanatParty.AccountId, _financialYearId, fromDate, toDate);
+            }
+            else
+            {
+                // Normal account - show regular ledger
+                result = await _ledgerService.GetLedgerAsync(account.AccountId, _financialYearId, fromDate, toDate,
+                    voucherTypeFilter, includeOpeningBalance);
+            }
 
             if (mySeq != _loadSeq)
                 return; // a newer load has since started - this result is stale, discard it
 
             dgvLedger.Rows.Clear();
+
+            // If this is a delegate account, show a note in the first row
+            if (isDelegateAccount && account.AmanatPartyId.HasValue)
+            {
+                var amanatParty = _accounts.FirstOrDefault(a => a.AccountId == account.AmanatPartyId.Value);
+                if (amanatParty != null)
+                {
+                    var bannerRowIndex = dgvLedger.Rows.Add("", "", "", $"[{account.Name}'s Activity under {amanatParty.Name}]", "", "", "", "");
+                    var bannerRow = dgvLedger.Rows[bannerRowIndex];
+                    bannerRow.DefaultCellStyle.BackColor = Color.LightBlue;
+                    bannerRow.DefaultCellStyle.Font = new Font("Segoe UI", 9, FontStyle.Bold);
+                }
+            }
 
             if (includeOpeningBalance)
                 AddBalanceRow("Opening Balance :", result.OpeningBalance);
