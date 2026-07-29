@@ -120,6 +120,37 @@ namespace FruitAccounting.UI
             ledgerSubMenu.DropDownItems.Add("Monthly", null, (s, e) => ShowForm("LedgerMonthly"));
             ledgerSubMenu.DropDownItems.Add("Amanat Party Wise", null, (s, e) => ShowForm("LedgerAmanatPartyWise"));
             accountReportsSubMenu.DropDownItems.Add(ledgerSubMenu);
+
+            var trialBalanceSubMenu = new ToolStripMenuItem("Trial Balance");
+            trialBalanceSubMenu.DropDownItems.Add("Detail", null, (s, e) => ShowForm("TrialBalanceDetail"));
+            trialBalanceSubMenu.DropDownItems.Add("Group Wise", null, (s, e) => ShowForm("TrialBalanceGroupWise"));
+            trialBalanceSubMenu.DropDownItems.Add("Region Wise", null, (s, e) => ShowForm("TrialBalanceRegionWise"));
+            trialBalanceSubMenu.DropDownItems.Add("Party Group Wise", null, (s, e) => ShowForm("TrialBalancePartyGroupWise"));
+            accountReportsSubMenu.DropDownItems.Add(trialBalanceSubMenu);
+
+            accountReportsSubMenu.DropDownItems.Add("Trading A/c", null, (s, e) => ShowForm("TradingAccount"));
+            accountReportsSubMenu.DropDownItems.Add("Profit & Loss A/c", null, (s, e) => ShowForm("ProfitLossAccount"));
+
+            var balanceSheetSubMenu = new ToolStripMenuItem("Balance Sheet");
+            balanceSheetSubMenu.DropDownItems.Add("Detail", null, (s, e) => ShowForm("BalanceSheetDetail"));
+            balanceSheetSubMenu.DropDownItems.Add("Summary", null, (s, e) => ShowForm("BalanceSheetSummary"));
+            accountReportsSubMenu.DropDownItems.Add(balanceSheetSubMenu);
+
+            accountReportsSubMenu.DropDownItems.Add("Interest Statement", null, (s, e) => ShowForm("InterestStatement"));
+            accountReportsSubMenu.DropDownItems.Add("Expense Summary", null, (s, e) => ShowForm("ExpenseSummary"));
+            accountReportsSubMenu.DropDownItems.Add("Bank Reconciliation", null, (s, e) => ShowForm("BankReconciliation"));
+            accountReportsSubMenu.DropDownItems.Add("Collection List", null, (s, e) => ShowForm("CollectionList"));
+            accountReportsSubMenu.DropDownItems.Add("Aging", null, (s, e) => ShowForm("Aging"));
+            accountReportsSubMenu.DropDownItems.Add("OHCS Payment", null, (s, e) => ShowForm("OhcsPayment"));
+            accountReportsSubMenu.DropDownItems.Add("Vatav Report", null, (s, e) => ShowForm("VatavReport"));
+            accountReportsSubMenu.DropDownItems.Add("Payment Not Received", null, (s, e) => ShowForm("PaymentNotReceived"));
+            accountReportsSubMenu.DropDownItems.Add("Cash Sales Receipt", null, (s, e) => ShowForm("CashSalesReceipt"));
+            accountReportsSubMenu.DropDownItems.Add("Cash Voucher", null, (s, e) => ShowForm("CashVoucher"));
+            accountReportsSubMenu.DropDownItems.Add("Payment Report", null, (s, e) => ShowForm("PaymentReport"));
+            accountReportsSubMenu.DropDownItems.Add("Bank Slip", null, (s, e) => ShowForm("BankSlip"));
+            accountReportsSubMenu.DropDownItems.Add("TCS Report", null, (s, e) => ShowForm("TcsReport"));
+            accountReportsSubMenu.DropDownItems.Add("TDS Report", null, (s, e) => ShowForm("TdsReport"));
+
             menuItemAccount.DropDownItems.Add(accountReportsSubMenu);
 
             // Domestic
