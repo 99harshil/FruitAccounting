@@ -510,10 +510,20 @@ namespace FruitAccounting.UI
                             _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
                     break;
                 case "CashRegisterAll":
-                    MessageBox.Show("Cash Register (All) will be implemented next.", "Coming Soon");
+                    ledgerService = Program.ServiceProvider?.GetService(typeof(LedgerService)) as LedgerService;
+                    accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var daybookServiceForCashReg = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    if (ledgerService != null && accountServiceForLedger != null && daybookServiceForCashReg != null)
+                        newForm = new CashRegisterAllForm(ledgerService, accountServiceForLedger, daybookServiceForCashReg,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
                     break;
                 case "CashRegisterUserWise":
-                    MessageBox.Show("Cash Register (User Wise) will be implemented next.", "Coming Soon");
+                    ledgerService = Program.ServiceProvider?.GetService(typeof(LedgerService)) as LedgerService;
+                    accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var daybookServiceForUserCashReg = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    if (ledgerService != null && accountServiceForLedger != null && daybookServiceForUserCashReg != null)
+                        newForm = new CashRegisterUserWiseForm(ledgerService, accountServiceForLedger, daybookServiceForUserCashReg,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear, _loggedInUser.UserId);
                     break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;

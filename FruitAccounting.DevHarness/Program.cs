@@ -240,6 +240,16 @@ internal static class Program
                                         provider.GetRequiredService<AccountService>(),
                                         provider.GetRequiredService<DaybookService>(),
                                         companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Cash Register (All)", () => new CashRegisterAllForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<DaybookService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Cash Register (User Wise)", () => new CashRegisterUserWiseForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<DaybookService>(),
+                                        companyId, financialYearId.Value, financialYear!, user?.UserId).ShowDialog()));
         }
 
         while (true)
