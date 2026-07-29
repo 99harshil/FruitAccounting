@@ -15,9 +15,11 @@ namespace FruitAccounting.UI
         private readonly DateOnly _fromDate;
         private readonly DateOnly _toDate;
         private readonly bool _weekTotal;
+        private readonly bool _prependAccountName;
+        private readonly long? _amanatPartyId;
 
         public LedgerMultiAccountReportForm(LedgerService ledgerService, string heading,
-            List<long> accountIds, long financialYearId, DateOnly fromDate, DateOnly toDate, bool weekTotal = false)
+            List<long> accountIds, long financialYearId, DateOnly fromDate, DateOnly toDate, bool weekTotal = false, bool prependAccountName = false, long? amanatPartyId = null)
         {
             InitializeComponent();
             _ledgerService = ledgerService;
@@ -26,6 +28,8 @@ namespace FruitAccounting.UI
             _fromDate = fromDate;
             _toDate = toDate;
             _weekTotal = weekTotal;
+            _prependAccountName = prependAccountName;
+            _amanatPartyId = amanatPartyId;
 
             lblHeading.Text = $"{heading}   ({fromDate:dd/MM/yyyy} to {toDate:dd/MM/yyyy})";
             Text = heading;
@@ -41,7 +45,9 @@ namespace FruitAccounting.UI
                 return;
             }
 
-            var results = await _ledgerService.GetLedgerForAccountsAsync(_accountIds, _financialYearId, _fromDate, _toDate);
+            var results = _amanatPartyId.HasValue
+                ? await _ledgerService.GetDelegateLedgersAsync(_accountIds, _amanatPartyId.Value, _financialYearId, _fromDate, _toDate)
+                : await _ledgerService.GetLedgerForAccountsAsync(_accountIds, _financialYearId, _fromDate, _toDate);
 
             if (results.Count == 0)
             {
@@ -51,8 +57,12 @@ namespace FruitAccounting.UI
 
             foreach (var result in results)
             {
-                int headerRowIndex = dgvLedger.Rows.Add("", $"{result.Account.Code}   {result.Account.Name}", "", "", "");
-                dgvLedger.Rows[headerRowIndex].DefaultCellStyle.Font = new Font(dgvLedger.Font, FontStyle.Bold);
+                // Account name header - centered
+                int headerRowIndex = dgvLedger.Rows.Add("", result.Account.Name, "", "", "");
+                var headerRow = dgvLedger.Rows[headerRowIndex];
+                headerRow.DefaultCellStyle.Font = new Font(dgvLedger.Font.FontFamily, 11, FontStyle.Bold);
+                headerRow.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+                headerRow.DefaultCellStyle.BackColor = Color.LightGray;
 
                 AddBalanceRow("Opening Balance :", result.OpeningBalance);
 

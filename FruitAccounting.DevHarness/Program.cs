@@ -231,6 +231,10 @@ internal static class Program
                                         provider.GetRequiredService<LedgerService>(),
                                         provider.GetRequiredService<AccountService>(),
                                         companyId, financialYearId.Value).ShowDialog()));
+            menu.Add(("Ledger (Amanat Party Wise)", () => new LedgerAmanatPartyWiseForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
         }
 
         while (true)

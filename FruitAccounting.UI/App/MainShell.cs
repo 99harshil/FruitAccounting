@@ -118,6 +118,7 @@ namespace FruitAccounting.UI
             ledgerSubMenu.DropDownItems.Add("Group Wise", null, (s, e) => ShowForm("LedgerGroupWise"));
             ledgerSubMenu.DropDownItems.Add("Daily", null, (s, e) => ShowForm("LedgerDaily"));
             ledgerSubMenu.DropDownItems.Add("Monthly", null, (s, e) => ShowForm("LedgerMonthly"));
+            ledgerSubMenu.DropDownItems.Add("Amanat Party Wise", null, (s, e) => ShowForm("LedgerAmanatPartyWise"));
             accountReportsSubMenu.DropDownItems.Add(ledgerSubMenu);
             menuItemAccount.DropDownItems.Add(accountReportsSubMenu);
 
@@ -492,6 +493,13 @@ namespace FruitAccounting.UI
                     if (ledgerService != null && accountServiceForLedger != null)
                         newForm = new LedgerMonthlyForm(ledgerService, accountServiceForLedger,
                             _company.CompanyId, _financialYear.FinancialYearId);
+                    break;
+                case "LedgerAmanatPartyWise":
+                    ledgerService = Program.ServiceProvider?.GetService(typeof(LedgerService)) as LedgerService;
+                    accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    if (ledgerService != null && accountServiceForLedger != null)
+                        newForm = new LedgerAmanatPartyWiseForm(ledgerService, accountServiceForLedger,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
                     break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;

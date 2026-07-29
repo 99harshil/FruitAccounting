@@ -84,6 +84,20 @@ public class LedgerService
         return results;
     }
 
+    /// Delegate Ledgers for multiple accounts under an Amanat Party - calls GetDelegateLedgerAsync for each.
+    public async Task<List<LedgerResult>> GetDelegateLedgersAsync(IEnumerable<long> delegateAccountIds,
+        long amanatPartyAccountId, long financialYearId, DateOnly fromDate, DateOnly toDate)
+    {
+        var results = new List<LedgerResult>();
+        foreach (var delegateAccountId in delegateAccountIds)
+        {
+            var result = await GetDelegateLedgerAsync(delegateAccountId, amanatPartyAccountId, financialYearId, fromDate, toDate);
+            if (result.Rows.Count > 0 || result.OpeningBalance != 0)
+                results.Add(result);
+        }
+        return results;
+    }
+
     /// <param name="voucherTypeFilter">
     /// When set, only rows of this VoucherType are returned (and counted in TotalDebit/TotalCredit) -
     /// e.g. "show me just the Purchase entries on this party's ledger". The Balance column on every
@@ -350,6 +364,105 @@ public class LedgerService
     {
         if (!string.IsNullOrWhiteSpace(chequeNo)) return chequeNo!;
         return createdBy?.DisplayName ?? createdBy?.Username ?? "";
+    }
+
+    public class AmanatGroupWiseRow
+    {
+        public bool IsAmanatPartyHeader { get; set; } // True if this is a group header
+        public long? AccountId { get; set; }
+        public string AccountName { get; set; } = "";
+        public string AccountCode { get; set; } = "";
+        public decimal TotalDebit { get; set; }
+        public decimal TotalCredit { get; set; }
+        public decimal Quantity { get; set; } // For sales transactions
+    }
+
+    public class AmanatGroupWiseResult
+    {
+        public List<AmanatGroupWiseRow> Rows { get; set; } = new();
+        public decimal GrandTotalDebit { get; set; }
+        public decimal GrandTotalCredit { get; set; }
+    }
+
+    /// Amanat Group Wise Report: All transactions grouped by Amanat Party, with delegates nested underneath
+    public async Task<AmanatGroupWiseResult> GetAmanatGroupWiseReportAsync(long financialYearId,
+        DateOnly fromDate, DateOnly toDate, long companyId)
+    {
+        using var context = _contextFactory.CreateDbContext();
+
+        // Get all ledger entries with OriginalAccountId set (delegated transactions)
+        var delegatedEntries = await context.LedgerEntries
+            .AsNoTracking()
+            .Include(e => e.Account) // Amanat Party account
+            .Include(e => e.OriginalAccount) // Delegate account
+            .Where(e => e.FinancialYearId == financialYearId
+                        && e.EntryDate >= fromDate
+                        && e.EntryDate <= toDate
+                        && e.OriginalAccountId.HasValue)
+            .ToListAsync();
+
+        var result = new AmanatGroupWiseResult();
+
+        // Group by Amanat Party (AccountId where OriginalAccountId is set)
+        var groupedByAmanatParty = delegatedEntries
+            .GroupBy(e => new { e.AccountId, e.Account })
+            .OrderBy(g => g.Key.Account.Name);
+
+        foreach (var amanatPartyGroup in groupedByAmanatParty)
+        {
+            var amanatPartyAccount = amanatPartyGroup.Key.Account;
+            var amanatPartyDebit = 0m;
+            var amanatPartyCredit = 0m;
+
+            // Add Amanat Party header row
+            var amanatPartyRow = new AmanatGroupWiseRow
+            {
+                IsAmanatPartyHeader = true,
+                AccountId = amanatPartyAccount.AccountId,
+                AccountName = amanatPartyAccount.Name,
+                AccountCode = amanatPartyAccount.Code,
+            };
+
+            // Group delegates under this Amanat Party
+            var delegatesByAmanatParty = amanatPartyGroup
+                .GroupBy(e => new { e.OriginalAccountId, e.OriginalAccount })
+                .OrderBy(g => g.Key.OriginalAccount.Name);
+
+            foreach (var delegateGroup in delegatesByAmanatParty)
+            {
+                var delegateAccount = delegateGroup.Key.OriginalAccount;
+                var delegateDebit = delegateGroup.Sum(e => e.Debit);
+                var delegateCredit = delegateGroup.Sum(e => e.Credit);
+                var delegateQty = delegateGroup.Sum(e => e.Quantity ?? 0);
+
+                amanatPartyDebit += delegateDebit;
+                amanatPartyCredit += delegateCredit;
+
+                // Add delegate row (indented under Amanat Party)
+                result.Rows.Add(new AmanatGroupWiseRow
+                {
+                    IsAmanatPartyHeader = false,
+                    AccountId = delegateAccount.AccountId,
+                    AccountName = $"  {delegateAccount.Name}", // Indented with spaces
+                    AccountCode = delegateAccount.Code,
+                    TotalDebit = delegateDebit,
+                    TotalCredit = delegateCredit,
+                    Quantity = delegateQty
+                });
+            }
+
+            // Update Amanat Party header with totals
+            amanatPartyRow.TotalDebit = amanatPartyDebit;
+            amanatPartyRow.TotalCredit = amanatPartyCredit;
+
+            // Insert header at the beginning of this group (need to track position)
+            result.Rows.Insert(result.Rows.Count - delegatesByAmanatParty.Count(), amanatPartyRow);
+
+            result.GrandTotalDebit += amanatPartyDebit;
+            result.GrandTotalCredit += amanatPartyCredit;
+        }
+
+        return result;
     }
 
     /// Delegate Ledger: shows transactions of a delegate account (e.g., Ramesh) that were routed

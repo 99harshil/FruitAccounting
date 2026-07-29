@@ -22,6 +22,7 @@ public class AccountService
             .Include(a => a.AccountGroup)
             .Include(a => a.Region)
             .Include(a => a.AmanatParty)
+            .Include(a => a.InverseAmanatParty)
             .Where(a => a.CompanyId == companyId)
             .OrderBy(a => a.Name)
             .ToListAsync();
