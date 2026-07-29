@@ -235,6 +235,11 @@ internal static class Program
                                         provider.GetRequiredService<LedgerService>(),
                                         provider.GetRequiredService<AccountService>(),
                                         companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Bank Register", () => new BankRegisterForm(
+                                        provider.GetRequiredService<LedgerService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        provider.GetRequiredService<DaybookService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
         }
 
         while (true)

@@ -501,6 +501,20 @@ namespace FruitAccounting.UI
                         newForm = new LedgerAmanatPartyWiseForm(ledgerService, accountServiceForLedger,
                             _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
                     break;
+                case "BankRegister":
+                    ledgerService = Program.ServiceProvider?.GetService(typeof(LedgerService)) as LedgerService;
+                    accountServiceForLedger = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    var daybookServiceForBankReg = Program.ServiceProvider?.GetService(typeof(DaybookService)) as DaybookService;
+                    if (ledgerService != null && accountServiceForLedger != null && daybookServiceForBankReg != null)
+                        newForm = new BankRegisterForm(ledgerService, accountServiceForLedger, daybookServiceForBankReg,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
+                case "CashRegisterAll":
+                    MessageBox.Show("Cash Register (All) will be implemented next.", "Coming Soon");
+                    break;
+                case "CashRegisterUserWise":
+                    MessageBox.Show("Cash Register (User Wise) will be implemented next.", "Coming Soon");
+                    break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;
                     var accountServiceBank = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;

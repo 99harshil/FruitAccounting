@@ -24,6 +24,17 @@ public class DaybookService
             .ToListAsync();
     }
 
+    public async Task<List<Daybook>> GetDaybooksAsync(long companyId, char bookType)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        return await context.Daybooks
+            .AsNoTracking()
+            .Include(d => d.LinkedAccount)
+            .Where(d => d.CompanyId == companyId && d.BookType == bookType)
+            .OrderBy(d => d.Name)
+            .ToListAsync();
+    }
+
     public async Task<List<Account>> GetAccountsForLinkingAsync(long companyId)
     {
         using var context = _contextFactory.CreateDbContext();
