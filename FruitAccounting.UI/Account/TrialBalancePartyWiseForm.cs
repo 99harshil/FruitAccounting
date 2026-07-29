@@ -4,109 +4,113 @@ using FruitAccounting.Data.Entities;
 
 namespace FruitAccounting.UI
 {
-    public partial class TrialBalanceGroupWiseForm : Form
+    public partial class TrialBalancePartyWiseForm : Form
     {
         private readonly TrialBalanceService _trialBalanceService;
-        private readonly AccountGroupService _accountGroupService;
+        private readonly AccountService _accountService;
         private readonly long _companyId;
         private readonly long _financialYearId;
         private readonly FinancialYear _financialYear;
 
-        private List<AccountGroup> _allGroups = new();
+        private List<Account> _allAccounts = new();
         private List<TrialBalanceService.TrialBalanceRow> _allRows = new();
-        private AccountGroup? _selectedGroup;
+        private Account? _selectedAccount;
 
-        public TrialBalanceGroupWiseForm(TrialBalanceService trialBalanceService, AccountGroupService accountGroupService,
+        public TrialBalancePartyWiseForm(TrialBalanceService trialBalanceService, AccountService accountService,
             long companyId, long financialYearId, FinancialYear financialYear)
         {
             InitializeComponent();
             _trialBalanceService = trialBalanceService;
-            _accountGroupService = accountGroupService;
+            _accountService = accountService;
             _companyId = companyId;
             _financialYearId = financialYearId;
             _financialYear = financialYear;
         }
 
-        private async void TrialBalanceGroupWiseForm_Load(object sender, EventArgs e)
+        private async void TrialBalancePartyWiseForm_Load(object sender, EventArgs e)
         {
             dtpFromDate.Value = _financialYear.StartDate.ToDateTime(TimeOnly.MinValue);
             dtpToDate.Value = DateTime.Today;
 
-            var mainGroups = await _accountGroupService.GetAllMainGroupsAsync(_companyId);
-            var subGroups = await _accountGroupService.GetAllSubGroupsAsync(_companyId);
+            _allAccounts = await _accountService.GetAllAccountsAsync(_companyId);
+            var activeAccounts = _allAccounts.Where(a => !a.IsBlocked).OrderBy(a => a.Code).ToList();
 
-            _allGroups = new List<AccountGroup>();
-            _allGroups.AddRange(mainGroups);
-            _allGroups.AddRange(subGroups.OrderBy(g => g.Name));
-
-            cmbGroup.Items.Clear();
-            foreach (var group in _allGroups)
+            cmbAccountCode.Items.Clear();
+            cmbAccountName.Items.Clear();
+            foreach (var account in activeAccounts)
             {
-                // Check if it's a sub group (has a parent)
-                if (group.ParentId.HasValue)
-                    cmbGroup.Items.Add($"  └─ {group.Name}");
-                else
-                    cmbGroup.Items.Add(group.Name);
+                cmbAccountCode.Items.Add(account.Code);
+                cmbAccountName.Items.Add(account.Name);
             }
-
-            if (cmbGroup.Items.Count > 0)
-                cmbGroup.SelectedIndex = 0;
         }
 
-        private void cmbGroup_SelectedIndexChanged(object sender, EventArgs e)
+        private void cmbAccountCode_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cmbGroup.SelectedIndex >= 0 && cmbGroup.SelectedIndex < _allGroups.Count)
+            if (cmbAccountCode.SelectedIndex < 0)
             {
-                _selectedGroup = _allGroups[cmbGroup.SelectedIndex];
+                cmbAccountName.SelectedIndex = -1;
+                return;
+            }
+
+            var selectedCode = cmbAccountCode.SelectedItem?.ToString();
+            var account = _allAccounts.FirstOrDefault(a =>
+                a.Code.Equals(selectedCode, StringComparison.OrdinalIgnoreCase) && !a.IsBlocked);
+
+            if (account != null)
+            {
+                var index = _allAccounts.Where(a => !a.IsBlocked).OrderBy(a => a.Code).ToList()
+                    .FindIndex(a => a.AccountId == account.AccountId);
+                cmbAccountName.SelectedIndex = index >= 0 ? index : -1;
+            }
+            else
+            {
+                cmbAccountName.SelectedIndex = -1;
+            }
+        }
+
+        private void cmbAccountName_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (cmbAccountName.SelectedIndex < 0)
+            {
+                cmbAccountCode.SelectedIndex = -1;
+                return;
+            }
+
+            var selectedName = cmbAccountName.SelectedItem?.ToString();
+            var account = _allAccounts.FirstOrDefault(a =>
+                a.Name.Equals(selectedName, StringComparison.OrdinalIgnoreCase) && !a.IsBlocked);
+
+            if (account != null)
+            {
+                var index = _allAccounts.Where(a => !a.IsBlocked).OrderBy(a => a.Code).ToList()
+                    .FindIndex(a => a.AccountId == account.AccountId);
+                cmbAccountCode.SelectedIndex = index >= 0 ? index : -1;
+            }
+            else
+            {
+                cmbAccountCode.SelectedIndex = -1;
             }
         }
 
         private async void btnLoad_Click(object sender, EventArgs e)
         {
-            if (cmbGroup.SelectedIndex < 0)
+            if (cmbAccountCode.SelectedIndex < 0)
             {
-                MessageBox.Show("Please select a Group", "Trial Balance");
+                MessageBox.Show("Please select an Account", "Trial Balance");
                 return;
             }
 
-            _selectedGroup = _allGroups[cmbGroup.SelectedIndex];
+            var selectedCode = cmbAccountCode.SelectedItem?.ToString();
+            _selectedAccount = _allAccounts.FirstOrDefault(a =>
+                a.Code.Equals(selectedCode, StringComparison.OrdinalIgnoreCase) && !a.IsBlocked);
+
+            if (_selectedAccount == null)
+            {
+                MessageBox.Show("Account not found", "Trial Balance");
+                return;
+            }
+
             await LoadTrialBalanceAsync();
-        }
-
-        private void rdbDetail_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rdbDetail.Checked)
-                RefreshDisplay();
-        }
-
-        private void rdbOnlyOp_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rdbOnlyOp.Checked)
-                RefreshDisplay();
-        }
-
-        private void rdbCrClosing_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rdbCrClosing.Checked)
-                RefreshDisplay();
-        }
-
-        private void rdbDbClosing_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rdbDbClosing.Checked)
-                RefreshDisplay();
-        }
-
-        private void rdbOnlyCl_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rdbOnlyCl.Checked)
-                RefreshDisplay();
-        }
-
-        private void rdbNoTransaction_CheckedChanged(object sender, EventArgs e)
-        {
-            if (rdbNoTransaction.Checked)
-                RefreshDisplay();
         }
 
         private async Task LoadTrialBalanceAsync()
@@ -205,19 +209,24 @@ namespace FruitAccounting.UI
         private void PopulateRows(bool showOpening = false, bool showTransaction = false, bool showClosing = false,
             bool onlyCredit = false, bool onlyDebit = false)
         {
-            if (_selectedGroup == null)
+            if (_selectedAccount == null)
                 return;
 
-            // Filter rows for selected group only
-            var filteredRows = _allRows.Where(r => r.AccountGroupId == _selectedGroup.AccountGroupId || r.IsSubTotal || r.IsGrandTotal).ToList();
+            // Show only rows for the selected account
+            var filteredRows = _allRows.Where(r =>
+                r.AccountId == _selectedAccount.AccountId ||
+                r.IsGroupHeader ||
+                (r.IsSubTotal && r.GroupName == _selectedAccount.AccountGroup?.Name) ||
+                r.IsGrandTotal).ToList();
 
             foreach (var row in filteredRows)
             {
-                // Skip group headers and subtotals that don't belong to this group
-                if (row.IsGroupHeader && row.AccountGroupId != _selectedGroup.AccountGroupId)
+                // Skip if it's a group header but not the account's group
+                if (row.IsGroupHeader && row.AccountGroupId != _selectedAccount.AccountGroupId)
                     continue;
 
-                if (row.IsSubTotal && !row.GroupName.Contains(_selectedGroup.Name))
+                // Skip if it's a subtotal but not for the account's group
+                if (row.IsSubTotal && !row.GroupName.Contains(_selectedAccount.AccountGroup?.Name ?? ""))
                     continue;
 
                 if (row.IsGroupHeader)
@@ -275,7 +284,7 @@ namespace FruitAccounting.UI
                 }
 
                 if (row.IsGrandTotal)
-                    continue; // Don't show grand total in group-wise view
+                    continue;
 
                 // Regular account row
                 int rowIdx = dgvTrialBalance.Rows.Add($"{row.AccountCode} {row.AccountName}");
@@ -316,6 +325,42 @@ namespace FruitAccounting.UI
                     dgvTrialBalance.Rows[rowIdx].Cells[cellIndex++].Value = row.ClosingDr == 0 ? "" : row.ClosingDr.ToString("N2", CultureInfo.InvariantCulture);
                 }
             }
+        }
+
+        private void rdbDetail_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdbDetail.Checked)
+                RefreshDisplay();
+        }
+
+        private void rdbOnlyOp_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdbOnlyOp.Checked)
+                RefreshDisplay();
+        }
+
+        private void rdbCrClosing_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdbCrClosing.Checked)
+                RefreshDisplay();
+        }
+
+        private void rdbDbClosing_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdbDbClosing.Checked)
+                RefreshDisplay();
+        }
+
+        private void rdbOnlyCl_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdbOnlyCl.Checked)
+                RefreshDisplay();
+        }
+
+        private void rdbNoTransaction_CheckedChanged(object sender, EventArgs e)
+        {
+            if (rdbNoTransaction.Checked)
+                RefreshDisplay();
         }
 
         private void btnClose_Click(object sender, EventArgs e) => Close();

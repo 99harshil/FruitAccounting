@@ -4,72 +4,81 @@ using FruitAccounting.Data.Entities;
 
 namespace FruitAccounting.UI
 {
-    public partial class TrialBalanceGroupWiseForm : Form
+    public partial class TrialBalanceRegionWiseForm : Form
     {
         private readonly TrialBalanceService _trialBalanceService;
-        private readonly AccountGroupService _accountGroupService;
+        private readonly RegionService _regionService;
+        private readonly AccountService _accountService;
         private readonly long _companyId;
         private readonly long _financialYearId;
         private readonly FinancialYear _financialYear;
 
-        private List<AccountGroup> _allGroups = new();
+        private List<FruitAccounting.Data.Entities.Region> _allRegions = new();
         private List<TrialBalanceService.TrialBalanceRow> _allRows = new();
-        private AccountGroup? _selectedGroup;
+        private List<long> _regionAccountIds = new();
+        private FruitAccounting.Data.Entities.Region? _selectedRegion;
 
-        public TrialBalanceGroupWiseForm(TrialBalanceService trialBalanceService, AccountGroupService accountGroupService,
-            long companyId, long financialYearId, FinancialYear financialYear)
+        public TrialBalanceRegionWiseForm(TrialBalanceService trialBalanceService, RegionService regionService,
+            AccountService accountService, long companyId, long financialYearId, FinancialYear financialYear)
         {
             InitializeComponent();
             _trialBalanceService = trialBalanceService;
-            _accountGroupService = accountGroupService;
+            _regionService = regionService;
+            _accountService = accountService;
             _companyId = companyId;
             _financialYearId = financialYearId;
             _financialYear = financialYear;
         }
 
-        private async void TrialBalanceGroupWiseForm_Load(object sender, EventArgs e)
+        private async void TrialBalanceRegionWiseForm_Load(object sender, EventArgs e)
         {
             dtpFromDate.Value = _financialYear.StartDate.ToDateTime(TimeOnly.MinValue);
             dtpToDate.Value = DateTime.Today;
 
-            var mainGroups = await _accountGroupService.GetAllMainGroupsAsync(_companyId);
-            var subGroups = await _accountGroupService.GetAllSubGroupsAsync(_companyId);
-
-            _allGroups = new List<AccountGroup>();
-            _allGroups.AddRange(mainGroups);
-            _allGroups.AddRange(subGroups.OrderBy(g => g.Name));
-
-            cmbGroup.Items.Clear();
-            foreach (var group in _allGroups)
+            _allRegions = await _regionService.GetAllRegionsAsync(_companyId);
+            cmbRegion.Items.Clear();
+            foreach (var region in _allRegions.OrderBy(r => r.Name))
             {
-                // Check if it's a sub group (has a parent)
-                if (group.ParentId.HasValue)
-                    cmbGroup.Items.Add($"  └─ {group.Name}");
-                else
-                    cmbGroup.Items.Add(group.Name);
+                cmbRegion.Items.Add(region.Name);
             }
 
-            if (cmbGroup.Items.Count > 0)
-                cmbGroup.SelectedIndex = 0;
+            if (cmbRegion.Items.Count > 0)
+                cmbRegion.SelectedIndex = 0;
         }
 
-        private void cmbGroup_SelectedIndexChanged(object sender, EventArgs e)
+        private async void cmbRegion_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (cmbGroup.SelectedIndex >= 0 && cmbGroup.SelectedIndex < _allGroups.Count)
+            if (cmbRegion.SelectedIndex >= 0)
             {
-                _selectedGroup = _allGroups[cmbGroup.SelectedIndex];
+                var selectedRegionName = cmbRegion.SelectedItem?.ToString();
+                _selectedRegion = _allRegions.FirstOrDefault(r => r.Name == selectedRegionName);
             }
         }
 
         private async void btnLoad_Click(object sender, EventArgs e)
         {
-            if (cmbGroup.SelectedIndex < 0)
+            if (cmbRegion.SelectedIndex < 0)
             {
-                MessageBox.Show("Please select a Group", "Trial Balance");
+                MessageBox.Show("Please select a Region", "Trial Balance");
                 return;
             }
 
-            _selectedGroup = _allGroups[cmbGroup.SelectedIndex];
+            var selectedRegionName = cmbRegion.SelectedItem?.ToString();
+            _selectedRegion = _allRegions.FirstOrDefault(r => r.Name == selectedRegionName);
+
+            if (_selectedRegion == null)
+            {
+                MessageBox.Show("Region not found", "Trial Balance");
+                return;
+            }
+
+            // Get all accounts for this region
+            var allAccounts = await _accountService.GetAllAccountsAsync(_companyId);
+            _regionAccountIds = allAccounts
+                .Where(a => a.RegionId == _selectedRegion.RegionId && !a.IsBlocked)
+                .Select(a => a.AccountId)
+                .ToList();
+
             await LoadTrialBalanceAsync();
         }
 
@@ -205,20 +214,27 @@ namespace FruitAccounting.UI
         private void PopulateRows(bool showOpening = false, bool showTransaction = false, bool showClosing = false,
             bool onlyCredit = false, bool onlyDebit = false)
         {
-            if (_selectedGroup == null)
+            if (_selectedRegion == null || _regionAccountIds.Count == 0)
                 return;
 
-            // Filter rows for selected group only
-            var filteredRows = _allRows.Where(r => r.AccountGroupId == _selectedGroup.AccountGroupId || r.IsSubTotal || r.IsGrandTotal).ToList();
+            // Filter rows for selected region's accounts only
+            var filteredRows = _allRows.Where(r =>
+                _regionAccountIds.Contains(r.AccountId) ||
+                r.IsSubTotal ||
+                r.IsGrandTotal).ToList();
 
             foreach (var row in filteredRows)
             {
-                // Skip group headers and subtotals that don't belong to this group
-                if (row.IsGroupHeader && row.AccountGroupId != _selectedGroup.AccountGroupId)
-                    continue;
+                // Skip group headers and subtotals if no accounts from this region in that group
+                if (row.IsGroupHeader || (row.IsSubTotal && !row.IsGrandTotal))
+                {
+                    var groupHasAccounts = filteredRows.Any(r =>
+                        !r.IsGroupHeader && !r.IsSubTotal && !r.IsGrandTotal &&
+                        r.GroupName == row.GroupName);
 
-                if (row.IsSubTotal && !row.GroupName.Contains(_selectedGroup.Name))
-                    continue;
+                    if (!groupHasAccounts)
+                        continue;
+                }
 
                 if (row.IsGroupHeader)
                 {
@@ -275,7 +291,7 @@ namespace FruitAccounting.UI
                 }
 
                 if (row.IsGrandTotal)
-                    continue; // Don't show grand total in group-wise view
+                    continue; // Don't show grand total in region-wise view
 
                 // Regular account row
                 int rowIdx = dgvTrialBalance.Rows.Add($"{row.AccountCode} {row.AccountName}");

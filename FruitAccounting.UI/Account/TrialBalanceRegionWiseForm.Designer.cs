@@ -1,6 +1,6 @@
 namespace FruitAccounting.UI
 {
-    partial class TrialBalanceGroupWiseForm
+    partial class TrialBalanceRegionWiseForm
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -20,8 +20,8 @@ namespace FruitAccounting.UI
             lblPeriod = new Label();
             dtpFromDate = new DateTimePicker();
             dtpToDate = new DateTimePicker();
-            lblGroup = new Label();
-            cmbGroup = new ComboBox();
+            lblRegion = new Label();
+            cmbRegion = new ComboBox();
             rdbDetail = new RadioButton();
             rdbOnlyOp = new RadioButton();
             rdbCrClosing = new RadioButton();
@@ -59,24 +59,24 @@ namespace FruitAccounting.UI
             dtpToDate.Size = new Size(100, 23);
             dtpToDate.TabIndex = 2;
 
-            // lblGroup
-            lblGroup.AutoSize = true;
-            lblGroup.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblGroup.Location = new Point(275, 18);
-            lblGroup.Name = "lblGroup";
-            lblGroup.Size = new Size(47, 15);
-            lblGroup.TabIndex = 3;
-            lblGroup.Text = "Group";
+            // lblRegion
+            lblRegion.AutoSize = true;
+            lblRegion.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblRegion.Location = new Point(275, 18);
+            lblRegion.Name = "lblRegion";
+            lblRegion.Size = new Size(49, 15);
+            lblRegion.TabIndex = 3;
+            lblRegion.Text = "Region";
 
-            // cmbGroup
-            cmbGroup.BackColor = Color.FromArgb(255, 255, 192);
-            cmbGroup.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbGroup.FlatStyle = FlatStyle.Flat;
-            cmbGroup.FormattingEnabled = true;
-            cmbGroup.Location = new Point(325, 15);
-            cmbGroup.Name = "cmbGroup";
-            cmbGroup.Size = new Size(200, 23);
-            cmbGroup.TabIndex = 4;
+            // cmbRegion
+            cmbRegion.BackColor = Color.FromArgb(255, 255, 192);
+            cmbRegion.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbRegion.FlatStyle = FlatStyle.Flat;
+            cmbRegion.FormattingEnabled = true;
+            cmbRegion.Location = new Point(325, 15);
+            cmbRegion.Name = "cmbRegion";
+            cmbRegion.Size = new Size(200, 23);
+            cmbRegion.TabIndex = 4;
 
             // btnLoad
             btnLoad = new Button();
@@ -193,7 +193,7 @@ namespace FruitAccounting.UI
             btnPrint.UseVisualStyleBackColor = false;
             btnPrint.Click += btnPrint_Click;
 
-            // TrialBalanceGroupWiseForm
+            // TrialBalanceRegionWiseForm
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(240, 240, 240);
@@ -208,18 +208,18 @@ namespace FruitAccounting.UI
             Controls.Add(rdbOnlyOp);
             Controls.Add(rdbDetail);
             Controls.Add(btnLoad);
-            Controls.Add(cmbGroup);
-            Controls.Add(lblGroup);
+            Controls.Add(cmbRegion);
+            Controls.Add(lblRegion);
             Controls.Add(dtpToDate);
             Controls.Add(dtpFromDate);
             Controls.Add(lblPeriod);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
-            Name = "TrialBalanceGroupWiseForm";
+            Name = "TrialBalanceRegionWiseForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Trial Balance (Group Wise)";
-            Load += TrialBalanceGroupWiseForm_Load;
+            Text = "Trial Balance (Region Wise)";
+            Load += TrialBalanceRegionWiseForm_Load;
             ((System.ComponentModel.ISupportInitialize)dgvTrialBalance).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -230,8 +230,8 @@ namespace FruitAccounting.UI
         private Label lblPeriod;
         private DateTimePicker dtpFromDate;
         private DateTimePicker dtpToDate;
-        private Label lblGroup;
-        private ComboBox cmbGroup;
+        private Label lblRegion;
+        private ComboBox cmbRegion;
         private Button btnLoad;
         private RadioButton rdbDetail;
         private RadioButton rdbOnlyOp;

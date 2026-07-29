@@ -569,6 +569,21 @@ namespace FruitAccounting.UI
                         newForm = new TrialBalanceGroupWiseForm(trialBalanceServiceGroupWise, accountGroupServiceForTB,
                             _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
                     break;
+                case "TrialBalanceRegionWise":
+                    var trialBalanceServiceRegionWise = Program.ServiceProvider?.GetService(typeof(TrialBalanceService)) as TrialBalanceService;
+                    var regionServiceForTB = Program.ServiceProvider?.GetService(typeof(RegionService)) as RegionService;
+                    var accountServiceForTB = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    if (trialBalanceServiceRegionWise != null && regionServiceForTB != null && accountServiceForTB != null)
+                        newForm = new TrialBalanceRegionWiseForm(trialBalanceServiceRegionWise, regionServiceForTB, accountServiceForTB,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
+                case "TrialBalancePartyWise":
+                    var trialBalanceServicePartyWise = Program.ServiceProvider?.GetService(typeof(TrialBalanceService)) as TrialBalanceService;
+                    var accountServiceForPartyWise = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
+                    if (trialBalanceServicePartyWise != null && accountServiceForPartyWise != null)
+                        newForm = new TrialBalancePartyWiseForm(trialBalanceServicePartyWise, accountServiceForPartyWise,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;
                     var accountServiceBank = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;

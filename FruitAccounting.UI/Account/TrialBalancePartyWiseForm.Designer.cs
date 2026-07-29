@@ -1,6 +1,6 @@
 namespace FruitAccounting.UI
 {
-    partial class TrialBalanceGroupWiseForm
+    partial class TrialBalancePartyWiseForm
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -20,8 +20,11 @@ namespace FruitAccounting.UI
             lblPeriod = new Label();
             dtpFromDate = new DateTimePicker();
             dtpToDate = new DateTimePicker();
-            lblGroup = new Label();
-            cmbGroup = new ComboBox();
+            lblAccountCode = new Label();
+            cmbAccountCode = new ComboBox();
+            lblAccountName = new Label();
+            cmbAccountName = new ComboBox();
+            btnLoad = new Button();
             rdbDetail = new RadioButton();
             rdbOnlyOp = new RadioButton();
             rdbCrClosing = new RadioButton();
@@ -59,34 +62,54 @@ namespace FruitAccounting.UI
             dtpToDate.Size = new Size(100, 23);
             dtpToDate.TabIndex = 2;
 
-            // lblGroup
-            lblGroup.AutoSize = true;
-            lblGroup.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            lblGroup.Location = new Point(275, 18);
-            lblGroup.Name = "lblGroup";
-            lblGroup.Size = new Size(47, 15);
-            lblGroup.TabIndex = 3;
-            lblGroup.Text = "Group";
+            // lblAccountCode
+            lblAccountCode.AutoSize = true;
+            lblAccountCode.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblAccountCode.Location = new Point(275, 18);
+            lblAccountCode.Name = "lblAccountCode";
+            lblAccountCode.Size = new Size(40, 15);
+            lblAccountCode.TabIndex = 3;
+            lblAccountCode.Text = "Code";
 
-            // cmbGroup
-            cmbGroup.BackColor = Color.FromArgb(255, 255, 192);
-            cmbGroup.DropDownStyle = ComboBoxStyle.DropDownList;
-            cmbGroup.FlatStyle = FlatStyle.Flat;
-            cmbGroup.FormattingEnabled = true;
-            cmbGroup.Location = new Point(325, 15);
-            cmbGroup.Name = "cmbGroup";
-            cmbGroup.Size = new Size(200, 23);
-            cmbGroup.TabIndex = 4;
+            // cmbAccountCode
+            cmbAccountCode.BackColor = Color.FromArgb(255, 255, 192);
+            cmbAccountCode.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbAccountCode.FlatStyle = FlatStyle.Flat;
+            cmbAccountCode.FormattingEnabled = true;
+            cmbAccountCode.Location = new Point(318, 15);
+            cmbAccountCode.Name = "cmbAccountCode";
+            cmbAccountCode.Size = new Size(100, 23);
+            cmbAccountCode.TabIndex = 4;
+            cmbAccountCode.SelectedIndexChanged += cmbAccountCode_SelectedIndexChanged;
+
+            // lblAccountName
+            lblAccountName.AutoSize = true;
+            lblAccountName.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            lblAccountName.Location = new Point(425, 18);
+            lblAccountName.Name = "lblAccountName";
+            lblAccountName.Size = new Size(28, 15);
+            lblAccountName.TabIndex = 5;
+            lblAccountName.Text = "A/c";
+
+            // cmbAccountName
+            cmbAccountName.BackColor = Color.FromArgb(255, 255, 192);
+            cmbAccountName.DropDownStyle = ComboBoxStyle.DropDownList;
+            cmbAccountName.FlatStyle = FlatStyle.Flat;
+            cmbAccountName.FormattingEnabled = true;
+            cmbAccountName.Location = new Point(456, 15);
+            cmbAccountName.Name = "cmbAccountName";
+            cmbAccountName.Size = new Size(200, 23);
+            cmbAccountName.TabIndex = 6;
+            cmbAccountName.SelectedIndexChanged += cmbAccountName_SelectedIndexChanged;
 
             // btnLoad
-            btnLoad = new Button();
             btnLoad.BackColor = Color.LightBlue;
             btnLoad.FlatStyle = FlatStyle.Popup;
             btnLoad.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
-            btnLoad.Location = new Point(530, 15);
+            btnLoad.Location = new Point(663, 15);
             btnLoad.Name = "btnLoad";
             btnLoad.Size = new Size(70, 23);
-            btnLoad.TabIndex = 5;
+            btnLoad.TabIndex = 7;
             btnLoad.Text = "Load";
             btnLoad.UseVisualStyleBackColor = false;
             btnLoad.Click += btnLoad_Click;
@@ -97,7 +120,7 @@ namespace FruitAccounting.UI
             rdbDetail.Location = new Point(12, 45);
             rdbDetail.Name = "rdbDetail";
             rdbDetail.Size = new Size(53, 19);
-            rdbDetail.TabIndex = 5;
+            rdbDetail.TabIndex = 8;
             rdbDetail.TabStop = true;
             rdbDetail.Text = "Detail";
             rdbDetail.UseVisualStyleBackColor = true;
@@ -108,7 +131,7 @@ namespace FruitAccounting.UI
             rdbOnlyOp.Location = new Point(80, 45);
             rdbOnlyOp.Name = "rdbOnlyOp";
             rdbOnlyOp.Size = new Size(80, 19);
-            rdbOnlyOp.TabIndex = 6;
+            rdbOnlyOp.TabIndex = 9;
             rdbOnlyOp.Text = "Only Op.";
             rdbOnlyOp.UseVisualStyleBackColor = true;
             rdbOnlyOp.CheckedChanged += rdbOnlyOp_CheckedChanged;
@@ -118,7 +141,7 @@ namespace FruitAccounting.UI
             rdbCrClosing.Location = new Point(170, 45);
             rdbCrClosing.Name = "rdbCrClosing";
             rdbCrClosing.Size = new Size(88, 19);
-            rdbCrClosing.TabIndex = 7;
+            rdbCrClosing.TabIndex = 10;
             rdbCrClosing.Text = "Cr. Closing";
             rdbCrClosing.UseVisualStyleBackColor = true;
             rdbCrClosing.CheckedChanged += rdbCrClosing_CheckedChanged;
@@ -128,7 +151,7 @@ namespace FruitAccounting.UI
             rdbDbClosing.Location = new Point(270, 45);
             rdbDbClosing.Name = "rdbDbClosing";
             rdbDbClosing.Size = new Size(90, 19);
-            rdbDbClosing.TabIndex = 8;
+            rdbDbClosing.TabIndex = 11;
             rdbDbClosing.Text = "Db. Closing";
             rdbDbClosing.UseVisualStyleBackColor = true;
             rdbDbClosing.CheckedChanged += rdbDbClosing_CheckedChanged;
@@ -138,7 +161,7 @@ namespace FruitAccounting.UI
             rdbOnlyCl.Location = new Point(375, 45);
             rdbOnlyCl.Name = "rdbOnlyCl";
             rdbOnlyCl.Size = new Size(73, 19);
-            rdbOnlyCl.TabIndex = 9;
+            rdbOnlyCl.TabIndex = 12;
             rdbOnlyCl.Text = "Only Cl.";
             rdbOnlyCl.UseVisualStyleBackColor = true;
             rdbOnlyCl.CheckedChanged += rdbOnlyCl_CheckedChanged;
@@ -148,7 +171,7 @@ namespace FruitAccounting.UI
             rdbNoTransaction.Location = new Point(460, 45);
             rdbNoTransaction.Name = "rdbNoTransaction";
             rdbNoTransaction.Size = new Size(110, 19);
-            rdbNoTransaction.TabIndex = 10;
+            rdbNoTransaction.TabIndex = 13;
             rdbNoTransaction.Text = "No Transaction";
             rdbNoTransaction.UseVisualStyleBackColor = true;
             rdbNoTransaction.CheckedChanged += rdbNoTransaction_CheckedChanged;
@@ -167,7 +190,7 @@ namespace FruitAccounting.UI
             dgvTrialBalance.ReadOnly = true;
             dgvTrialBalance.RowHeadersVisible = false;
             dgvTrialBalance.Size = new Size(1000, 450);
-            dgvTrialBalance.TabIndex = 11;
+            dgvTrialBalance.TabIndex = 14;
 
             // btnClose
             btnClose.BackColor = Color.LightGreen;
@@ -176,7 +199,7 @@ namespace FruitAccounting.UI
             btnClose.Location = new Point(558, 536);
             btnClose.Name = "btnClose";
             btnClose.Size = new Size(70, 28);
-            btnClose.TabIndex = 12;
+            btnClose.TabIndex = 15;
             btnClose.Text = "Close";
             btnClose.UseVisualStyleBackColor = false;
             btnClose.Click += btnClose_Click;
@@ -188,12 +211,12 @@ namespace FruitAccounting.UI
             btnPrint.Location = new Point(636, 536);
             btnPrint.Name = "btnPrint";
             btnPrint.Size = new Size(70, 28);
-            btnPrint.TabIndex = 13;
+            btnPrint.TabIndex = 16;
             btnPrint.Text = "Print";
             btnPrint.UseVisualStyleBackColor = false;
             btnPrint.Click += btnPrint_Click;
 
-            // TrialBalanceGroupWiseForm
+            // TrialBalancePartyWiseForm
             AutoScaleDimensions = new SizeF(7F, 15F);
             AutoScaleMode = AutoScaleMode.Font;
             BackColor = Color.FromArgb(240, 240, 240);
@@ -208,18 +231,20 @@ namespace FruitAccounting.UI
             Controls.Add(rdbOnlyOp);
             Controls.Add(rdbDetail);
             Controls.Add(btnLoad);
-            Controls.Add(cmbGroup);
-            Controls.Add(lblGroup);
+            Controls.Add(cmbAccountName);
+            Controls.Add(lblAccountName);
+            Controls.Add(cmbAccountCode);
+            Controls.Add(lblAccountCode);
             Controls.Add(dtpToDate);
             Controls.Add(dtpFromDate);
             Controls.Add(lblPeriod);
             FormBorderStyle = FormBorderStyle.FixedDialog;
             MaximizeBox = false;
             MinimizeBox = false;
-            Name = "TrialBalanceGroupWiseForm";
+            Name = "TrialBalancePartyWiseForm";
             StartPosition = FormStartPosition.CenterScreen;
-            Text = "Trial Balance (Group Wise)";
-            Load += TrialBalanceGroupWiseForm_Load;
+            Text = "Trial Balance (Party Wise)";
+            Load += TrialBalancePartyWiseForm_Load;
             ((System.ComponentModel.ISupportInitialize)dgvTrialBalance).EndInit();
             ResumeLayout(false);
             PerformLayout();
@@ -230,8 +255,10 @@ namespace FruitAccounting.UI
         private Label lblPeriod;
         private DateTimePicker dtpFromDate;
         private DateTimePicker dtpToDate;
-        private Label lblGroup;
-        private ComboBox cmbGroup;
+        private Label lblAccountCode;
+        private ComboBox cmbAccountCode;
+        private Label lblAccountName;
+        private ComboBox cmbAccountName;
         private Button btnLoad;
         private RadioButton rdbDetail;
         private RadioButton rdbOnlyOp;

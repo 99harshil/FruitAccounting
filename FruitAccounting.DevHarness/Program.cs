@@ -258,6 +258,15 @@ internal static class Program
                                         provider.GetRequiredService<TrialBalanceService>(),
                                         provider.GetRequiredService<AccountGroupService>(),
                                         companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Trial Balance (Region Wise)", () => new TrialBalanceRegionWiseForm(
+                                        provider.GetRequiredService<TrialBalanceService>(),
+                                        provider.GetRequiredService<RegionService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Trial Balance (Party Wise)", () => new TrialBalancePartyWiseForm(
+                                        provider.GetRequiredService<TrialBalanceService>(),
+                                        provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
         }
 
         while (true)
