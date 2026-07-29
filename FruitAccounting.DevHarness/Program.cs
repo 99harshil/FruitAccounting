@@ -60,6 +60,7 @@ internal static class Program
         services.AddScoped<BankReconciliationService>();
         services.AddScoped<JournalService>();
         services.AddScoped<LedgerService>();
+        services.AddScoped<TrialBalanceService>();
         services.AddScoped<LotService>();
         services.AddScoped<Tds194QService>();
         services.AddScoped<PurchaseService>();
@@ -250,6 +251,13 @@ internal static class Program
                                         provider.GetRequiredService<AccountService>(),
                                         provider.GetRequiredService<DaybookService>(),
                                         companyId, financialYearId.Value, financialYear!, user?.UserId).ShowDialog()));
+            menu.Add(("Trial Balance (Detail)", () => new TrialBalanceDetailForm(
+                                        provider.GetRequiredService<TrialBalanceService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Trial Balance (Group Wise)", () => new TrialBalanceGroupWiseForm(
+                                        provider.GetRequiredService<TrialBalanceService>(),
+                                        provider.GetRequiredService<AccountGroupService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
         }
 
         while (true)

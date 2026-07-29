@@ -556,6 +556,19 @@ namespace FruitAccounting.UI
                         newForm = new CashRegisterUserWiseForm(ledgerService, accountServiceForLedger, daybookServiceForUserCashReg,
                             _company.CompanyId, _financialYear.FinancialYearId, _financialYear, _loggedInUser.UserId);
                     break;
+                case "TrialBalanceDetail":
+                    var trialBalanceService = Program.ServiceProvider?.GetService(typeof(TrialBalanceService)) as TrialBalanceService;
+                    if (trialBalanceService != null)
+                        newForm = new TrialBalanceDetailForm(trialBalanceService,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
+                case "TrialBalanceGroupWise":
+                    var trialBalanceServiceGroupWise = Program.ServiceProvider?.GetService(typeof(TrialBalanceService)) as TrialBalanceService;
+                    var accountGroupServiceForTB = Program.ServiceProvider?.GetService(typeof(AccountGroupService)) as AccountGroupService;
+                    if (trialBalanceServiceGroupWise != null && accountGroupServiceForTB != null)
+                        newForm = new TrialBalanceGroupWiseForm(trialBalanceServiceGroupWise, accountGroupServiceForTB,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
                 case "BankReceipt":
                     var receiptServiceBank = Program.ServiceProvider?.GetService(typeof(ReceiptService)) as ReceiptService;
                     var accountServiceBank = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
