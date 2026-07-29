@@ -48,9 +48,17 @@ namespace FruitAccounting.UI
 
         private async void cmbUser_SelectedIndexChanged(object sender, EventArgs e)
         {
-            // Load accounts for selected user
+            // Load cash daybooks and get their linked accounts
+            var cashDaybooks = await _daybookService.GetDaybooksAsync(_companyId, 'C');
+            var cashAccountIds = cashDaybooks
+                .Where(d => d.LinkedAccountId.HasValue)
+                .Select(d => d.LinkedAccountId.Value)
+                .Distinct()
+                .ToList();
+
+            // Load accounts for selected user - only those linked to cash daybooks
             _userAccounts = _allAccounts
-                .Where(a => !a.IsBlocked)
+                .Where(a => !a.IsBlocked && cashAccountIds.Contains(a.AccountId))
                 .OrderBy(a => a.Code)
                 .ToList();
 
