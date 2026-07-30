@@ -338,6 +338,13 @@ public class PurchaseService
             if (salesForThisLot)
                 return (false, "Cannot delete a Purchase Bill that has Sales created from its Lots. Delete the related Sales first");
 
+            // A Lot split off children - deleting the parent would strand them.
+            var hasChildLots = await context.Lots
+                .Where(l => l.ParentLotId != null && lotIds.Contains(l.ParentLotId.Value))
+                .AnyAsync();
+            if (hasChildLots)
+                return (false, "Cannot delete a Purchase Bill whose Lots have been split. Reverse the Lot Split first");
+
             var deductions = await context.TdsPurchaseDeductions
                 .Where(d => d.PurchaseBillId == purchaseBillId)
                 .ToListAsync();
@@ -350,6 +357,14 @@ public class PurchaseService
 
             context.PurchaseBillItems.RemoveRange(bill.PurchaseBillItems);
             context.PurchaseBills.Remove(bill);
+
+            // The Lots were created by this bill, so they go with it. Without this they survived as
+            // orphans - invisible in every screen, yet still holding a foreign key to the supplier,
+            // so deleting that supplier later failed with a raw FK error. Each Lot belongs to exactly
+            // one bill item, so there is nothing shared to preserve here.
+            var lots = await context.Lots.Where(l => lotIds.Contains(l.LotId)).ToListAsync();
+            context.Lots.RemoveRange(lots);
+
             await context.SaveChangesAsync();
             await transaction.CommitAsync();
             return (true, "Purchase Bill deleted successfully");

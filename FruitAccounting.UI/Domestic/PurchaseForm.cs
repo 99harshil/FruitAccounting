@@ -92,8 +92,7 @@ namespace FruitAccounting.UI
 
         private async Task RefreshAccountsAsync()
         {
-            var all = await _accountService.GetAllAccountsAsync(_companyId);
-            _accounts = all.Where(a => !a.IsBlocked).OrderBy(a => a.Name).ToList();
+            _accounts = await _accountService.GetPartyAccountsAsync(_companyId);
 
             cmbSupplierCode.Items.Clear();
             cmbSupplierName.Items.Clear();
@@ -127,6 +126,7 @@ namespace FruitAccounting.UI
             _suppressAccountSync = true;
             cmbSupplierName.SelectedIndex = cmbSupplierCode.SelectedIndex;
             _suppressAccountSync = false;
+            ApplySupplierAmanatParty();
             _ = RecalculateFooterAsync();
         }
 
@@ -136,7 +136,30 @@ namespace FruitAccounting.UI
             _suppressAccountSync = true;
             cmbSupplierCode.SelectedIndex = cmbSupplierName.SelectedIndex;
             _suppressAccountSync = false;
+            ApplySupplierAmanatParty();
             _ = RecalculateFooterAsync();
+        }
+
+        // Every account carries an Amanat Party - Account Master self-references it when none is
+        // picked - so choosing a supplier should bring its Amanat Party across instead of leaving
+        // the field on "(None)". DisplayCurrentRecord sets the supplier first and the saved
+        // Amanat Party after, so re-opening an existing bill still shows what was saved on it.
+        private void ApplySupplierAmanatParty()
+        {
+            int idx = cmbSupplierName.SelectedIndex;
+            if (idx < 0 || idx >= _accounts.Count)
+                return;
+
+            var amanatId = _accounts[idx].AmanatPartyId;
+            if (!amanatId.HasValue)
+            {
+                cmbAmanatParty.SelectedIndex = 0;   // (None)
+                return;
+            }
+
+            // -1 when the Amanat Party is not a party account (so not offered here) - fall back to (None)
+            int amanatIdx = _accounts.FindIndex(a => a.AccountId == amanatId.Value);
+            cmbAmanatParty.SelectedIndex = amanatIdx >= 0 ? amanatIdx + 1 : 0;
         }
 
         private async void ModeChanged(object sender, EventArgs e)

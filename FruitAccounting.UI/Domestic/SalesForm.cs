@@ -132,8 +132,7 @@ namespace FruitAccounting.UI
 
         private async Task RefreshAccountsAsync()
         {
-            var all = await _accountService.GetAllAccountsAsync(_companyId);
-            _accounts = all.Where(a => !a.IsBlocked).OrderBy(a => a.Name).ToList();
+            _accounts = await _accountService.GetPartyAccountsAsync(_companyId);
 
             colBuyerCode.Items.Clear();
             colBuyerName.Items.Clear();

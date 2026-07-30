@@ -28,6 +28,28 @@ public class AccountService
             .ToListAsync();
     }
 
+    /// Accounts that can legitimately be a party on a voucher - a buyer, supplier, amanat party
+    /// or crate party. A party is always someone who owes you or whom you owe, so only
+    /// balance-sheet accounts qualify; income, expense and trading accounts never do.
+    /// Without this, Sales/Purchase/Receipt/Payment pickers offered every account, and a test
+    /// Sales bill was saved against COMMISSION INCOME and RATE DIFFERENCES as "buyers".
+    /// Journal is deliberately NOT filtered - a journal entry may touch any account.
+    public async Task<List<Account>> GetPartyAccountsAsync(long companyId)
+    {
+        using var context = _contextFactory.CreateDbContext();
+        return await context.Accounts
+            .AsNoTracking()
+            .Include(a => a.AccountGroup)
+            .Include(a => a.Region)
+            .Include(a => a.AmanatParty)
+            .Include(a => a.InverseAmanatParty)
+            .Where(a => a.CompanyId == companyId
+                        && !a.IsBlocked
+                        && (a.AccountGroup!.Nature == "ASSETS" || a.AccountGroup!.Nature == "LIABILITY"))
+            .OrderBy(a => a.Name)
+            .ToListAsync();
+    }
+
     public async Task<AccountOpeningBalance?> GetOpeningBalanceAsync(long accountId, long financialYearId)
     {
         using var context = _contextFactory.CreateDbContext();
@@ -311,7 +333,49 @@ public class AccountService
         }
         catch (Exception ex)
         {
+            // The checks above cover transactions, opening balances and Amanat Party references,
+            // but 32 columns across 27 tables point at accounts. Anything else reaches the database
+            // and comes back as EF's "An error occurred while saving the entity changes", which
+            // tells the user nothing. Translate the foreign-key violation into the actual blocker.
+            var blocker = DescribeForeignKeyBlocker(ex);
+            if (blocker != null)
+                return (false, $"Cannot delete Account: it is still used by {blocker}.");
+
             return (false, $"Error deleting Account: {ex.Message}");
         }
+    }
+
+    // Maps the referencing table in a Postgres foreign-key violation (SQLSTATE 23503) to
+    // something a user recognises. Returns null when the error is not an FK violation.
+    private static string? DescribeForeignKeyBlocker(Exception ex)
+    {
+        for (Exception? e = ex; e != null; e = e.InnerException)
+        {
+            if (e is not Npgsql.PostgresException pg || pg.SqlState != "23503")
+                continue;
+
+            var table = pg.TableName ?? "";
+            return table switch
+            {
+                "lots"                     => "one or more Lots",
+                "daybooks"                 => "a Daybook (it is the linked account)",
+                "purchase_bills"           => "one or more Purchase Bills",
+                "sales" or "sales_bills"   => "one or more Sales Bills",
+                "receipts"                 => "one or more Receipts",
+                "payments"                 => "one or more Payments",
+                "journal_voucher_lines"    => "one or more Journal Vouchers",
+                "crate_transactions"       => "one or more Crate transactions",
+                "cold_storage_transactions" => "one or more Cold Storage transactions",
+                "tds_payments" or "tds_purchase_deductions" => "one or more TDS records",
+                "desavar_purchases" or "desavar_sales"     => "one or more Desavar vouchers",
+                "import_purchases" or "import_sales" or "import_purchase_items" => "one or more Import vouchers",
+                "bank_entries"             => "one or more Bank entries",
+                "whatsapp_dispatches"      => "a WhatsApp dispatch record",
+                "accounts"                 => "another Account (as its Amanat Party, Party Group or merge target)",
+                ""                         => "another record",
+                _                          => $"records in '{table}'"
+            };
+        }
+        return null;
     }
 }

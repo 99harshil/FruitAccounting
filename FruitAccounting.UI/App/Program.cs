@@ -15,8 +15,13 @@ namespace FruitAccounting.UI
         public static string ConnectionString { get; private set; } = string.Empty;
         public static IServiceProvider? ServiceProvider { get; internal set; }
 
+        // Must stay non-async. A WinForms "async Task Main" has no SynchronizationContext, so the
+        // first await resumes on a thread-pool thread (MTA) and every form shown after it runs
+        // there too - which breaks any control needing OLE. A DataGridViewComboBox cell throws
+        // "Current thread must be set to single thread apartment (STA) mode" the moment it is
+        // opened. Keep all UI on the STA thread and do the two DB reads below synchronously.
         [STAThread]
-        static async Task Main()
+        static void Main()
         {
             ApplicationConfiguration.Initialize();
 
@@ -106,7 +111,7 @@ namespace FruitAccounting.UI
 
                 // Get user's first company from database
                 using var context = appContextFactory.CreateDbContext();
-                var userCompany = await context.Companies.AsNoTracking().FirstOrDefaultAsync();
+                var userCompany = context.Companies.AsNoTracking().FirstOrDefault();
 
                 if (userCompany == null)
                 {
@@ -120,7 +125,8 @@ namespace FruitAccounting.UI
                     continue;   // user cancelled — show login again
 
                 var selectedFinancialYearId = fyForm.SelectedFinancialYearId;
-                var selectedFinancialYear = await financialYearService.GetFinancialYearAsync(selectedFinancialYearId);
+                var selectedFinancialYear = financialYearService
+                    .GetFinancialYearAsync(selectedFinancialYearId).GetAwaiter().GetResult();
 
                 if (selectedFinancialYear == null)
                 {
