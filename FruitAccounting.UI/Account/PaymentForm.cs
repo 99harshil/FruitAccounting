@@ -25,6 +25,10 @@ namespace FruitAccounting.UI
         private long _nextPaymentNo = 1;
         private bool _suppressAccountSync;
 
+        // Guards the Activated refresh - Activated fires before the first load has populated
+        // _accounts, and refreshing an empty list would just clear the combos.
+        private bool _accountsLoaded;
+
         public PaymentForm(PaymentService paymentService, AccountService accountService, DaybookService daybookService,
             AccountGroupService accountGroupService, RegionService regionService,
             long companyId, long financialYearId, char bookTypeMode, long? currentUserId,
@@ -73,6 +77,7 @@ namespace FruitAccounting.UI
 
         private async void PaymentForm_Load(object sender, EventArgs e)
         {
+            Activated += PaymentForm_Activated;
             await LoadDataAsync();
         }
 
@@ -103,7 +108,20 @@ namespace FruitAccounting.UI
 
         private async Task RefreshAccountsAsync()
         {
-            _accounts = await _accountService.GetPartyAccountsAsync(_companyId);
+            // Remember the selection by AccountId - refilling the combo clears SelectedIndex, and
+            // this also runs on Activated, so without this a half-entered voucher would lose its
+            // account every time the window regained focus.
+            long? selectedId = cmbAccountName.SelectedIndex >= 0 && cmbAccountName.SelectedIndex < _accounts.Count
+                ? _accounts[cmbAccountName.SelectedIndex].AccountId
+                : null;
+
+            // NOT restricted to party accounts, unlike Sales/Purchase. A payment voucher may pay a
+            // direct expense outright - cash to the transporter debits TRUCK FARE, cash for vatav
+            // debits VATAV EXPENSES - so income/expense accounts have to stay selectable here.
+            var all = await _accountService.GetAllAccountsAsync(_companyId);
+            _accounts = all.Where(a => !a.IsBlocked).OrderBy(a => a.Name).ToList();
+
+            _suppressAccountSync = true;
             cmbAccountCode.Items.Clear();
             cmbAccountName.Items.Clear();
             foreach (var acc in _accounts)
@@ -111,6 +129,21 @@ namespace FruitAccounting.UI
                 cmbAccountCode.Items.Add(acc.Code);
                 cmbAccountName.Items.Add(acc.Name);
             }
+
+            int restoreIndex = selectedId.HasValue
+                ? _accounts.FindIndex(a => a.AccountId == selectedId.Value)
+                : -1;
+            cmbAccountCode.SelectedIndex = restoreIndex;
+            cmbAccountName.SelectedIndex = restoreIndex;
+            _suppressAccountSync = false;
+            _accountsLoaded = true;
+        }
+
+        // Picks up accounts added or removed in Account Master while this form stayed open.
+        private async void PaymentForm_Activated(object sender, EventArgs e)
+        {
+            if (!_accountsLoaded) return;
+            await RefreshAccountsAsync();
         }
 
         // cmbAccountCode and cmbAccountName are populated from the same _accounts list in the

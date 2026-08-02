@@ -18,6 +18,10 @@ namespace FruitAccounting.UI
         private readonly long? _currentUserId;
 
         private List<Account> _accounts = new();
+
+        // Guards the Activated refresh - Activated fires before the first load has populated
+        // _accounts, and refreshing an empty list would just clear the buyer columns.
+        private bool _accountsLoaded;
         private List<SalesService.AvailablePurchaseBillInfo> _availableBills = new();
         private List<SalesService.LotSaleInfo> _availableLots = new();
         private SalesService.LotSaleInfo? _currentLot;
@@ -63,6 +67,7 @@ namespace FruitAccounting.UI
 
         private async void SalesForm_Load(object sender, EventArgs e)
         {
+            Activated += SalesForm_Activated;
             await LoadDataAsync();
 
             if (_preselectPurchaseBillId.HasValue && _preselectLotId.HasValue)
@@ -141,6 +146,31 @@ namespace FruitAccounting.UI
                 colBuyerCode.Items.Add(acc.Code);
                 colBuyerName.Items.Add(acc.Name);
             }
+
+            // A DataGridViewComboBoxCell throws if its value is not among the column's items. This
+            // also runs on Activated, so a buyer that was blocked or deleted meanwhile would blow
+            // up the grid on the next repaint - keep those values selectable instead.
+            foreach (DataGridViewRow row in dgvItems.Rows)
+            {
+                if (row.IsNewRow) continue;
+                KeepExistingValue(colBuyerCode, row);
+                KeepExistingValue(colBuyerName, row);
+            }
+
+            _accountsLoaded = true;
+        }
+
+        private static void KeepExistingValue(DataGridViewComboBoxColumn column, DataGridViewRow row)
+        {
+            if (row.Cells[column.Index].Value is string v && v.Length > 0 && !column.Items.Contains(v))
+                column.Items.Add(v);
+        }
+
+        // Picks up accounts added or removed in Account Master while this form stayed open.
+        private async void SalesForm_Activated(object sender, EventArgs e)
+        {
+            if (!_accountsLoaded) return;
+            await RefreshAccountsAsync();
         }
 
         private async Task RefreshAvailableBillsAsync(long? excludingLotId = null)

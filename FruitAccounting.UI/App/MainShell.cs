@@ -60,6 +60,8 @@ namespace FruitAccounting.UI
             menuItemUtility.DropDownItems.Clear();
             menuItemExit.DropDownItems.Clear();
 
+            SetupWindowMenu();
+
             // Main Menu
             var userMgrMenu = new ToolStripMenuItem("User Manager");
             userMgrMenu.DropDownItems.Add("Create User", null, (s, e) => ShowForm("CreateUser"));
@@ -577,6 +579,12 @@ namespace FruitAccounting.UI
                         newForm = new TrialBalanceRegionWiseForm(trialBalanceServiceRegionWise, regionServiceForTB, accountServiceForTB,
                             _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
                     break;
+                case "TradingAccount":
+                    var tradingAccountService = Program.ServiceProvider?.GetService(typeof(TradingAccountService)) as TradingAccountService;
+                    if (tradingAccountService != null)
+                        newForm = new TradingAccountForm(tradingAccountService,
+                            _company.CompanyId, _financialYear.FinancialYearId, _financialYear);
+                    break;
                 case "TrialBalancePartyWise":
                     var trialBalanceServicePartyWise = Program.ServiceProvider?.GetService(typeof(TrialBalanceService)) as TrialBalanceService;
                     var accountServiceForPartyWise = Program.ServiceProvider?.GetService(typeof(AccountService)) as AccountService;
@@ -603,11 +611,62 @@ namespace FruitAccounting.UI
             {
                 _openForms[formKey] = newForm;
                 newForm.FormClosed += (s, e) => _openForms.Remove(formKey);
-                if (newForm.MdiParent == null)
+
+                // CreateUserForm closes itself by setting DialogResult, and that only ends a form
+                // shown with ShowDialog - as an MDI child its OK/Cancel buttons would stop working.
+                // It is the only screen here that does this, so it stays a dialog.
+                if (RequiresModal(formKey))
+                {
                     newForm.ShowDialog();
-                else
-                    newForm.Show();
+                    return;
+                }
+
+                // Everything else opens as an MDI child, so the dashboard menu stays reachable and
+                // several screens can be open at once. MainShell has always been an MDI container
+                // and the BringToFront() guard at the top of this method was written for exactly
+                // this - but every screen went through ShowDialog(), which blocked the shell until
+                // it was closed.
+                newForm.MdiParent = this;
+
+                // MDI children ignore CenterScreen and would all land on the same spot. Cascade
+                // them instead, wrapping so a long run of screens never marches off the client area.
+                newForm.StartPosition = FormStartPosition.Manual;
+                int offset = ((MdiChildren.Length - 1) % 6) * 26;
+                newForm.Location = new Point(offset, offset);
+
+                newForm.Show();
+                newForm.BringToFront();
             }
+        }
+
+        private static bool RequiresModal(string formKey) => formKey == "CreateUser";
+
+        // Lists every open screen so you can switch between them, plus the usual arrange commands.
+        // MdiWindowListItem makes WinForms maintain the list of open children automatically.
+        private ToolStripMenuItem? _windowMenu;
+
+        private void SetupWindowMenu()
+        {
+            if (_windowMenu != null)
+                return;
+
+            _windowMenu = new ToolStripMenuItem("Window");
+            _windowMenu.DropDownItems.Add("Cascade", null, (s, e) => LayoutMdi(MdiLayout.Cascade));
+            _windowMenu.DropDownItems.Add("Tile Horizontally", null, (s, e) => LayoutMdi(MdiLayout.TileHorizontal));
+            _windowMenu.DropDownItems.Add("Tile Vertically", null, (s, e) => LayoutMdi(MdiLayout.TileVertical));
+            _windowMenu.DropDownItems.Add(new ToolStripSeparator());
+            _windowMenu.DropDownItems.Add("Close All", null, (s, e) =>
+            {
+                foreach (var child in MdiChildren.ToArray())
+                    child.Close();
+            });
+            _windowMenu.DropDownItems.Add(new ToolStripSeparator());
+
+            // insert before Exit so it reads Main / Master / ... / Utility / Window / Exit
+            int exitIndex = menuStripMain.Items.IndexOf(menuItemExit);
+            menuStripMain.Items.Insert(exitIndex >= 0 ? exitIndex : menuStripMain.Items.Count, _windowMenu);
+
+            menuStripMain.MdiWindowListItem = _windowMenu;
         }
 
         private void LogOff()

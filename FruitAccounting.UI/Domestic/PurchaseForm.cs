@@ -25,6 +25,10 @@ namespace FruitAccounting.UI
         private long _nextBillNo = 1;
         private int _nextLotNo = 1;
         private bool _suppressAccountSync;
+
+        // Guards the Activated refresh - Activated fires before the first load has populated
+        // _accounts, and refreshing an empty list would just clear the combos.
+        private bool _accountsLoaded;
         private bool _suppressGridEvents;
 
         public PurchaseForm(PurchaseService purchaseService, AccountService accountService,
@@ -61,6 +65,7 @@ namespace FruitAccounting.UI
 
         private async void PurchaseForm_Load(object sender, EventArgs e)
         {
+            Activated += PurchaseForm_Activated;
             await LoadDataAsync();
         }
 
@@ -92,8 +97,17 @@ namespace FruitAccounting.UI
 
         private async Task RefreshAccountsAsync()
         {
+            // Remember all three selections by AccountId - refilling the combos clears
+            // SelectedIndex, and this also runs on Activated, so without this a half-entered bill
+            // would lose its supplier every time the window regained focus. Amanat and Crate carry
+            // a "(None)" entry at index 0, so an account sits one position further down.
+            long? supplierId = SelectedAccountId(cmbSupplierName.SelectedIndex, 0);
+            long? amanatId   = SelectedAccountId(cmbAmanatParty.SelectedIndex, 1);
+            long? crateId    = SelectedAccountId(cmbCrateParty.SelectedIndex, 1);
+
             _accounts = await _accountService.GetPartyAccountsAsync(_companyId);
 
+            _suppressAccountSync = true;
             cmbSupplierCode.Items.Clear();
             cmbSupplierName.Items.Clear();
             cmbAmanatParty.Items.Clear();
@@ -107,6 +121,32 @@ namespace FruitAccounting.UI
                 cmbAmanatParty.Items.Add(acc.Name);
                 cmbCrateParty.Items.Add(acc.Name);
             }
+
+            int supplierIdx = IndexOfAccount(supplierId);
+            cmbSupplierCode.SelectedIndex = supplierIdx;
+            cmbSupplierName.SelectedIndex = supplierIdx;
+            cmbAmanatParty.SelectedIndex = IndexOfAccount(amanatId) is var ai && ai >= 0 ? ai + 1 : 0;
+            cmbCrateParty.SelectedIndex  = IndexOfAccount(crateId)  is var ci && ci >= 0 ? ci + 1 : 0;
+            _suppressAccountSync = false;
+            _accountsLoaded = true;
+        }
+
+        // offset is 1 for combos that carry a leading "(None)" entry, 0 otherwise
+        private long? SelectedAccountId(int selectedIndex, int offset)
+        {
+            int i = selectedIndex - offset;
+            return i >= 0 && i < _accounts.Count ? _accounts[i].AccountId : null;
+        }
+
+        private int IndexOfAccount(long? accountId)
+            => accountId.HasValue ? _accounts.FindIndex(a => a.AccountId == accountId.Value) : -1;
+
+        // Picks up accounts added or removed in Account Master while this form stayed open.
+        private async void PurchaseForm_Activated(object sender, EventArgs e)
+        {
+            if (!_accountsLoaded) return;
+            await RefreshAccountsAsync();
+            await RefreshItemsAsync();
         }
 
         private async Task RefreshItemsAsync()
@@ -116,6 +156,19 @@ namespace FruitAccounting.UI
             colItem.Items.Clear();
             foreach (var item in _items)
                 colItem.Items.Add(item.Name);
+
+            // A DataGridViewComboBoxCell throws if its value is not among the column's items, so a
+            // row already holding an item that has since been deactivated would blow up the grid
+            // on the next repaint. Keep such values selectable rather than losing the line.
+            foreach (DataGridViewRow row in dgvItems.Rows)
+            {
+                if (row.IsNewRow) continue;
+                if (row.Cells[colItem.Index].Value is string name
+                    && name.Length > 0 && !colItem.Items.Contains(name))
+                {
+                    colItem.Items.Add(name);
+                }
+            }
         }
 
         // cmbSupplierCode and cmbSupplierName are populated from the same _accounts list in the

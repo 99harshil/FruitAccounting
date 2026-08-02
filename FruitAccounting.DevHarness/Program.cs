@@ -61,6 +61,7 @@ internal static class Program
         services.AddScoped<JournalService>();
         services.AddScoped<LedgerService>();
         services.AddScoped<TrialBalanceService>();
+        services.AddScoped<TradingAccountService>();
         services.AddScoped<LotService>();
         services.AddScoped<Tds194QService>();
         services.AddScoped<PurchaseService>();
@@ -266,6 +267,9 @@ internal static class Program
             menu.Add(("Trial Balance (Party Wise)", () => new TrialBalancePartyWiseForm(
                                         provider.GetRequiredService<TrialBalanceService>(),
                                         provider.GetRequiredService<AccountService>(),
+                                        companyId, financialYearId.Value, financialYear!).ShowDialog()));
+            menu.Add(("Trading A/c", () => new TradingAccountForm(
+                                        provider.GetRequiredService<TradingAccountService>(),
                                         companyId, financialYearId.Value, financialYear!).ShowDialog()));
         }
 
